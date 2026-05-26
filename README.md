@@ -1,61 +1,81 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+<div align="center">
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+# 🥇 منصة تتبع أسعار الذهب والسبائك
+### Gold Prices & Bullion Tracking Platform
 
-## About Laravel
+[![Laravel](https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](https://laravel.com)
+[![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
+[![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://mysql.com)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+**نظام متكامل وعالي الأداء لتتبع أسعار الذهب الخام، السبايك، والعملات الذهبية.**
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+</div>
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## 🎯 الرؤية
+بناء منصة عربية احترافية توفر أدق الأسعار اللحظية مع معادلات تسعير ذكية، مصممة خصيصاً للعمل بكفاءة فائقة على **الاستضافات المشتركة**.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## 🚀 المميزات الرئيسية
+| الميزة | الوصف |
+| :--- | :--- |
+| 🔄 **تحديثات آلية** | جلب بيانات الأسعار عالمياً كل ساعة. |
+| 🧮 **محرك تسعير ذكي** | حساب لحظي شامل (مصنعية + دمغة + كاش باك). |
+| 📱 **تجربة سلسة** | تطبيق Flutter يدعم الـ Offline Caching. |
+| 📈 **تحليلات بيانية** | رسوم بيانية تفاعلية لحركة السوق. |
+| 🔔 **تنبيهات ذكية** | إشعارات عند الوصول للأسعار المستهدفة. |
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+## 🏗️ المعمارية التقنية
+```mermaid
+graph TD
+    User[المستخدم - تطبيق Flutter] --> API[Laravel REST API]
+    API --> Database[(MySQL Database)]
+    Scheduler[Cron Jobs] --> API
+    API --> External[External Gold API]
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+## 📂 خريطة الوثائق (Docs Index)
+يمكنك الوصول لكافة التفاصيل الفنية عبر المجلد `/docs`:
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+- 📜 **[المتطلبات (PRD)](docs/01-product/prd.md)**
+- 📐 **[المعمارية التقنية](docs/02-architecture/system-architecture.md)**
+- 💾 **[تصميم قاعدة البيانات](docs/03-database/erd.md)**
+- 🧮 **[محرك التسعير](docs/04-pricing-engine/formulas.md)**
+- 🔗 **[واجهات الـ API](docs/05-api/api-design.md)**
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 🛠️ البدء في التطوير
+للبدء، اتبع هذه الخطوات البسيطة:
 
-## Code of Conduct
+1. **إعداد قاعدة البيانات:**
+   ```bash
+   # استيراد ملف الهيكلية
+   mysql -u root -p gold_db < docs/03-database/schema.sql
+   ```
+2. **تجهيز الخلفية:**
+   ```bash
+   composer install
+   php artisan migrate
+   ```
+3. **تطوير المهام:**
+   راجع المهام المحددة في **[نظام المهام](docs/11-tasks/task-1.md)** للبدء فوراً.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+## 🛡️ الأداء والأمان
+- **أمان:** حماية عبر `Laravel Sanctum`.
+- **أداء:** نظام `Caching` متطور لتقليل الضغط على السيرفر.
+- **توسع:** هيكلية قابلة للتوسع لدول وعملات متعددة.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
 
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+<div align="center">
+  <sub>تم تطوير هذا المشروع بمعايير هندسية تضمن الأداء والاستقرار.</sub>
+</div>
