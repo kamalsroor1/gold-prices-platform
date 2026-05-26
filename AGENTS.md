@@ -6,3 +6,5 @@
 - **Pricing Logic:** Centralize calculations via Service Layer. Refer `docs/04-pricing-engine/formulas.md`.
 - **Deployment Constraint:** Optimized for Hostinger Shared Hosting. Use API caching (`docs/08-performance/performance-optimization.md`).
 - **Workflow:** Always check `progress.json` and use `start-task.md` prompt for task initialization.
+- **Git Conventions:** Use English for git commit messages. Messages must be detailed, describing the specific changes made in the files.
+
