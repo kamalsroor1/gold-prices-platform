@@ -1,0 +1,45 @@
+erDiagram
+    Countries ||--o{ ExchangeRates : "يتبع لها"
+    Countries ||--o{ GoldPrices : "يتبع لها"
+    Countries ||--o{ GoldPriceHistory : "يتبع لها"
+    Countries ||--o{ GoldPriceCandles : "يتبع لها"
+    Countries ||--o{ Brands : "يوجد فيها"
+    Brands ||--o{ PricingRules : "تحدد"
+    GoldProducts ||--o{ PricingRules : "يخضع لـ"
+    Users ||--o{ Alerts : "ينشئ"
+    Users ||--o{ Watchlist : "يضيف"
+    Countries ||--o{ Alerts : "يستهدف"
+    GoldProducts ||--o{ Watchlist : "يتابع"
+
+    Countries {
+        int id PK
+        string name
+        string currency
+    }
+
+    ExchangeRates {
+        int id PK
+        int country_id FK
+        float rate
+    }
+
+    GoldProducts {
+        int id PK
+        int karat
+        float weight
+    }
+
+    PricingRules {
+        int id PK
+        float tax_percentage
+        float fixed_fees
+    }
+    
+    -- باقي الكيانات تبقى كما هي
+    GoldPrices { int id PK }
+    GoldPriceHistory { int id PK }
+    GoldPriceCandles { int id PK }
+    Brands { int id PK }
+    Users { int id PK }
+    Alerts { int id PK }
+    Watchlist { int id PK }
