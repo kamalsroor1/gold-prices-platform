@@ -17,6 +17,10 @@ return new class extends Migration
             $table->integer('karat');
             $table->decimal('price', 15, 2);
             $table->timestamp('created_at')->useCurrent();
+
+            // الفهارس المطلوبة لتحسين الأداء للرسوم البيانية وتاريخ الأسعار
+            $table->index(['country_id', 'created_at'], 'idx_country_timestamp');
+            $table->index('created_at', 'idx_fetched_at');
         });
     }
 

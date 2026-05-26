@@ -19,6 +19,9 @@ return new class extends Migration
             $table->string('flag_url')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamp('created_at')->useCurrent();
+
+            // الفهارس المطلوبة لتحسين الأداء
+            $table->index('is_active', 'idx_active_country');
         });
     }
 
