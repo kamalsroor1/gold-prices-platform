@@ -18,6 +18,8 @@ Route::prefix('v1')->group(function () {
     Route::get('/bullions', [BullionController::class, 'index']);
     
     Route::middleware('auth.token')->group(function () {
+        Route::get('/profile', [AuthController::class, 'profile']);
+        Route::post('/profile', [AuthController::class, 'updateProfile']);
         Route::get('/alerts', [AlertController::class, 'index']);
         Route::post('/alerts', [AlertController::class, 'store']);
         Route::delete('/alerts/{id}', [AlertController::class, 'destroy']);

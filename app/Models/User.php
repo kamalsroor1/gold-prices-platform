@@ -23,6 +23,11 @@ class User extends Authenticatable
         'phone_number',
         'password',
         'api_token',
+        'country_id',
+        'price_alerts_enabled',
+        'periodic_alerts_enabled',
+        'daily_summary_enabled',
+        'app_language',
     ];
 
     /**
@@ -46,6 +51,10 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'price_alerts_enabled' => 'boolean',
+            'periodic_alerts_enabled' => 'boolean',
+            'daily_summary_enabled' => 'boolean',
+            'country_id' => 'integer',
         ];
     }
 }

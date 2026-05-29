@@ -38,6 +38,57 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _countryId = LocalStorageService.countryId;
     _selectedCountry = _getCountryName(_countryId);
     _defaultCurrency = _getCurrencyName(_countryId);
+    
+    // جلب الإعدادات السحابية الحقيقية من السيرفر فور تشغيل الشاشة لمزامنتها!
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncSettingsFromServer();
+    });
+  }
+
+  // مزامنة وسحب الإعدادات الفعلية للمستخدم من السيرفر
+  Future<void> _syncSettingsFromServer() async {
+    final bool isGuest = LocalStorageService.token == null || LocalStorageService.token!.isEmpty;
+    if (isGuest) return;
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final dynamic response = await apiClient.get('profile', authenticated: true);
+      
+      if (response is Map && response.containsKey('user')) {
+        final map = Map<String, dynamic>.from(response['user']);
+        
+        setState(() {
+          _countryId = map['country_id'] ?? _countryId;
+          _selectedCountry = _getCountryName(_countryId);
+          _defaultCurrency = _getCurrencyName(_countryId);
+          
+          _notificationsEnabled = map['price_alerts_enabled'] ?? _notificationsEnabled;
+          _periodicAlertsEnabled = map['periodic_alerts_enabled'] ?? _periodicAlertsEnabled;
+          _dailySummaryEnabled = map['daily_summary_enabled'] ?? _dailySummaryEnabled;
+          _appLanguage = map['app_language'] ?? _appLanguage;
+        });
+
+        // تحديث الذاكرة المحلية المستمرة
+        await LocalStorageService.saveCountryId(_countryId);
+        ref.read(selectedCountryIdProvider.notifier).state = _countryId;
+        await LocalStorageService.savePriceAlerts(_notificationsEnabled);
+        await LocalStorageService.savePeriodicAlerts(_periodicAlertsEnabled);
+        await LocalStorageService.saveDailySummary(_dailySummaryEnabled);
+        await LocalStorageService.saveAppLanguage(_appLanguage);
+      }
+    } catch (e) {
+      print('Error syncing settings from server: $e');
+    }
+  }
+
+  // حفظ وتحديث الإعدادات سحابياً في قاعدة بيانات السيرفر
+  Future<void> _updateSettingsOnServer(Map<String, dynamic> data) async {
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      await apiClient.post('profile', data, authenticated: true);
+    } catch (e) {
+      print('Error syncing profile settings to server: $e');
+    }
   }
 
   // مفسر أسماء الدول بناءً على الـ ID
@@ -64,6 +115,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   // فتح نافذة تغيير الدولة المخصصة
   void _showCountrySelectionDialog() {
+    final bool isGuest = LocalStorageService.token == null || LocalStorageService.token!.isEmpty;
     final countries = [
       {'id': 1, 'name': 'مصر'},
       {'id': 2, 'name': 'السعودية'},
@@ -108,6 +160,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     // 2. تحديث الـ Provider المركزي لتغيير وتحديث أسعار كل الشاشات لحظياً!
                     ref.read(selectedCountryIdProvider.notifier).state = id;
                     
+                    // 3. حفظ التغيير سحابياً إن لم يكن زائرًا
+                    if (!isGuest) {
+                      _updateSettingsOnServer({'country_id': id});
+                    }
+
                     Navigator.pop(context);
                     
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -128,6 +185,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   // فتح نافذة تغيير اللغة
   void _showLanguageSelectionDialog() {
+    final bool isGuest = LocalStorageService.token == null || LocalStorageService.token!.isEmpty;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF161616),
@@ -156,6 +215,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       _appLanguage = lang;
                     });
                     LocalStorageService.saveAppLanguage(lang);
+                    
+                    if (!isGuest) {
+                      _updateSettingsOnServer({'app_language': lang});
+                    }
+
                     Navigator.pop(context);
                   },
                 );
@@ -294,6 +358,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildSettingsCard() {
+    final bool isGuest = LocalStorageService.token == null || LocalStorageService.token!.isEmpty;
+
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF161616),
@@ -342,6 +408,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   _notificationsEnabled = value;
                 });
                 await LocalStorageService.savePriceAlerts(value);
+                if (!isGuest) {
+                  _updateSettingsOnServer({'price_alerts_enabled': value});
+                }
               },
             ),
             onTap: () {
@@ -365,6 +434,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   _periodicAlertsEnabled = value;
                 });
                 await LocalStorageService.savePeriodicAlerts(value);
+                if (!isGuest) {
+                  _updateSettingsOnServer({'periodic_alerts_enabled': value});
+                }
               },
             ),
             onTap: () {},
@@ -383,6 +455,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   _dailySummaryEnabled = value;
                 });
                 await LocalStorageService.saveDailySummary(value);
+                if (!isGuest) {
+                  _updateSettingsOnServer({'daily_summary_enabled': value});
+                }
               },
             ),
             onTap: () {},

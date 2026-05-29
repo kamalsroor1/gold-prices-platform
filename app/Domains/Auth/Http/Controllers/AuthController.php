@@ -61,4 +61,26 @@ class AuthController extends Controller
         }
         return response()->json(['message' => 'تم تسجيل الخروج بنجاح']);
     }
+
+    public function profile(Request $request)
+    {
+        return response()->json(['user' => $request->user()]);
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+        
+        $data = $request->validate([
+            'country_id' => 'sometimes|integer|exists:countries,id',
+            'price_alerts_enabled' => 'sometimes|boolean',
+            'periodic_alerts_enabled' => 'sometimes|boolean',
+            'daily_summary_enabled' => 'sometimes|boolean',
+            'app_language' => 'sometimes|string|max:20',
+        ]);
+
+        $user->update($data);
+
+        return response()->json(['user' => $user, 'message' => 'تم تحديث الإعدادات بنجاح']);
+    }
 }
