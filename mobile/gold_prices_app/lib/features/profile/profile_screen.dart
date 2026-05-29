@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api_client.dart';
+import '../../core/local_storage_service.dart';
 import '../auth/auth_provider.dart';
 import '../auth/welcome_screen.dart';
+import '../auth/login_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -51,6 +53,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildProfileHeader() {
+    final bool isGuest = LocalStorageService.token == null || LocalStorageService.token!.isEmpty;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -66,21 +70,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             child: const Icon(Icons.person, size: 40, color: Color(0xFF00BFA5)),
           ),
           const SizedBox(width: 20),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'المستخدم الزائر',
-                  style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                  isGuest ? 'المستخدم الزائر' : 'حساب مستخدم نشط',
+                  style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  'مستكشف في سوق الذهب',
-                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                  isGuest ? 'سجل دخول لتفعيل كافة الميزات والتنبيهات المخصصة' : 'مستكشف ومستثمر في سوق الذهب',
+                  style: const TextStyle(color: Colors.grey, fontSize: 13),
                 ),
-                SizedBox(height: 4),
-                Text(
+                const SizedBox(height: 4),
+                const Text(
                   'تاريخ الانضمام: مايو 2026',
                   style: TextStyle(color: Colors.grey, fontSize: 11),
                 ),
@@ -162,6 +166,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildActionsCard() {
+    final bool isGuest = LocalStorageService.token == null || LocalStorageService.token!.isEmpty;
+
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF161616),
@@ -184,47 +190,60 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             onTap: () {},
           ),
           const Divider(height: 1, color: Colors.white10),
-          _buildSettingsTile(
-            icon: Icons.logout,
-            title: 'تسجيل الخروج',
-            textColor: Colors.redAccent,
-            trailing: const Icon(Icons.arrow_forward_ios, color: Colors.redAccent, size: 16),
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  backgroundColor: const Color(0xFF161616),
-                  title: const Text('تسجيل الخروج', style: TextStyle(color: Colors.white)),
-                  content: const Text('هل أنت متأكد أنك تريد تسجيل الخروج؟', style: TextStyle(color: Colors.grey)),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('إلغاء', style: TextStyle(color: Colors.white)),
-                    ),
-                    TextButton(
-                      onPressed: () async {
-                        Navigator.pop(context);
-                        try {
-                          await ref.read(authRepositoryProvider).logout();
-                          ref.read(apiClientProvider).clearToken(); // مسح التوكين برمجياً ومحلياً من الذاكرة المستمرة
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-                            (route) => false,
-                          );
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('خطأ أثناء تسجيل الخروج: ${e.toString()}')),
-                          );
-                        }
-                      },
-                      child: const Text('تأكيد', style: TextStyle(color: Colors.redAccent)),
-                    ),
-                  ],
+          isGuest
+              ? _buildSettingsTile(
+                  icon: Icons.login,
+                  title: 'تسجيل الدخول',
+                  textColor: const Color(0xFF00BFA5),
+                  trailing: const Icon(Icons.arrow_forward_ios, color: Color(0xFF00BFA5), size: 16),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    );
+                  },
+                )
+              : _buildSettingsTile(
+                  icon: Icons.logout,
+                  title: 'تسجيل الخروج',
+                  textColor: Colors.redAccent,
+                  trailing: const Icon(Icons.arrow_forward_ios, color: Colors.redAccent, size: 16),
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        backgroundColor: const Color(0xFF161616),
+                        title: const Text('تسجيل الخروج', style: TextStyle(color: Colors.white)),
+                        content: const Text('هل أنت متأكد أنك تريد تسجيل الخروج؟', style: TextStyle(color: Colors.grey)),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('إلغاء', style: TextStyle(color: Colors.white)),
+                          ),
+                          TextButton(
+                            onPressed: () async {
+                              Navigator.pop(context);
+                              try {
+                                await ref.read(authRepositoryProvider).logout();
+                                ref.read(apiClientProvider).clearToken(); // مسح التوكين برمجياً ومحلياً من الذاكرة المستمرة
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+                                  (route) => false,
+                                );
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('خطأ أثناء تسجيل الخروج: ${e.toString()}')),
+                                );
+                              }
+                            },
+                            child: const Text('تأكيد', style: TextStyle(color: Colors.redAccent)),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
         ],
       ),
     );
