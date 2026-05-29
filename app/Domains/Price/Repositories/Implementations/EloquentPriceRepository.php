@@ -14,7 +14,10 @@ class EloquentPriceRepository implements PriceRepositoryInterface
 
     public function create(array $data)
     {
-        return GoldPrice::create($data);
+        return GoldPrice::updateOrCreate(
+            ['country_id' => $data['country_id'], 'karat' => $data['karat']],
+            ['price' => $data['price']]
+        );
     }
 
     public function getHistory(int $countryId, ?int $karat = null, ?string $startDate = null, ?string $endDate = null, int $perPage = 15)

@@ -17,6 +17,8 @@ class ProfileScreen extends ConsumerStatefulWidget {
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _notificationsEnabled = true;
+  bool _periodicAlertsEnabled = true;
+  bool _dailySummaryEnabled = true;
   String _defaultCurrency = 'USD (\$)';
   String _selectedCountry = 'مصر';
 
@@ -202,6 +204,40 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 MaterialPageRoute(builder: (context) => const AlertsScreen()),
               );
             },
+          ),
+          const Divider(height: 1, color: Colors.white10),
+
+          // تنبيهات التغير الدوري (كل بضع ساعات)
+          _buildSettingsTile(
+            icon: Icons.update,
+            title: 'تنبيهات التغير الدوري (كل بضع ساعات)',
+            trailing: Switch.adaptive(
+              value: _periodicAlertsEnabled,
+              activeColor: const Color(0xFF00BFA5),
+              onChanged: (value) {
+                setState(() {
+                  _periodicAlertsEnabled = value;
+                });
+              },
+            ),
+            onTap: () {},
+          ),
+          const Divider(height: 1, color: Colors.white10),
+
+          // تقرير التغير اليومي (ملخص الصباح والمساء)
+          _buildSettingsTile(
+            icon: Icons.summarize_outlined,
+            title: 'تقرير التغير اليومي (ملخص الصباح والمساء)',
+            trailing: Switch.adaptive(
+              value: _dailySummaryEnabled,
+              activeColor: const Color(0xFF00BFA5),
+              onChanged: (value) {
+                setState(() {
+                  _dailySummaryEnabled = value;
+                });
+              },
+            ),
+            onTap: () {},
           ),
           const Divider(height: 1, color: Colors.white10),
           
