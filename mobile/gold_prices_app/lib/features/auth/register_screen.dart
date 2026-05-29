@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/api_client.dart';
 import '../navigation/main_navigation_screen.dart';
 import 'login_screen.dart';
 
-class RegisterScreen extends StatefulWidget {
+class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -21,7 +24,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _agreeToTerms = false;
   bool _isLoading = false;
 
-  void _handleRegister() {
+  Future<void> _handleRegister() async {
     if (_formKey.currentState!.validate()) {
       if (!_agreeToTerms) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -35,10 +38,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       setState(() => _isLoading = true);
       
-      // محاكاة إنشاء الحساب
-      Future.delayed(const Duration(seconds: 1), () {
+      try {
+        final apiClient = ref.read(apiClientProvider);
+        final response = await apiClient.post('register', {
+          'name': _nameController.text,
+          'phone_number': _phoneController.text,
+          'email': _emailController.text.isEmpty ? null : _emailController.text,
+          'password': _passwordController.text,
+          'password_confirmation': _confirmPasswordController.text,
+        });
+
         if (mounted) {
           setState(() => _isLoading = false);
+          
+          apiClient.setToken(response['token'] as String);
           
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -47,20 +60,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           );
           
-          // الانتقال للرئيسية
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
             (route) => false,
           );
         }
-      });
+      } catch (e) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('خطأ: ${e.toString()}'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+      }
     }
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _phoneController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -85,14 +108,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(
-                    Icons.person_add_alt_1_outlined,
-                    size: 80,
-                    color: Color(0xFF00BFA5),
-                  ),
+                  const Icon(Icons.person_add_alt_1_outlined, size: 80, color: Color(0xFF00BFA5)),
                   const SizedBox(height: 32),
                   
-                  // نموذج الحساب
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -102,46 +120,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     child: Column(
                       children: [
-                        // الاسم الكامل
                         TextFormField(
                           controller: _nameController,
                           keyboardType: TextInputType.name,
                           style: const TextStyle(color: Colors.white),
-                          decoration: const InputDecoration(
-                            labelText: 'الاسم الكامل',
-                            prefixIcon: Icon(Icons.person_outline),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'يرجى إدخال اسمك الكامل';
-                            }
-                            return null;
-                          },
+                          decoration: const InputDecoration(labelText: 'الاسم الكامل', prefixIcon: Icon(Icons.person_outline)),
+                          validator: (value) => (value == null || value.isEmpty) ? 'يرجى إدخال اسمك الكامل' : null,
                         ),
                         const SizedBox(height: 16),
                         
-                        // البريد الإلكتروني
+                        TextFormField(
+                          controller: _phoneController,
+                          keyboardType: TextInputType.phone,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: const InputDecoration(labelText: 'رقم الهاتف', prefixIcon: Icon(Icons.phone_outlined)),
+                          validator: (value) => (value == null || value.isEmpty) ? 'يرجى إدخال رقم الهاتف' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                           style: const TextStyle(color: Colors.white),
-                          decoration: const InputDecoration(
-                            labelText: 'البريد الإلكتروني',
-                            prefixIcon: Icon(Icons.email_outlined),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'يرجى إدخال البريد الإلكتروني';
-                            }
-                            if (!value.contains('@')) {
-                              return 'يرجى إدخال بريد إلكتروني صحيح';
-                            }
-                            return null;
-                          },
+                          decoration: const InputDecoration(labelText: 'البريد الإلكتروني (اختياري)', prefixIcon: Icon(Icons.email_outlined)),
                         ),
                         const SizedBox(height: 16),
                         
-                        // كلمة المرور
                         TextFormField(
                           controller: _passwordController,
                           obscureText: _obscurePassword,
@@ -150,30 +154,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             labelText: 'كلمة المرور',
                             prefixIcon: const Icon(Icons.lock_open_outlined),
                             suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                                color: Colors.grey,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
+                              icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
+                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                             ),
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'يرجى إدخال كلمة المرور';
-                            }
-                            if (value.length < 6) {
-                              return 'يجب أن لا تقل كلمة المرور عن 6 خانات';
-                            }
-                            return null;
-                          },
+                          validator: (value) => (value == null || value.length < 6) ? 'يجب أن لا تقل كلمة المرور عن 6 خانات' : null,
                         ),
                         const SizedBox(height: 16),
                         
-                        // تأكيد كلمة المرور
                         TextFormField(
                           controller: _confirmPasswordController,
                           obscureText: _obscureConfirmPassword,
@@ -182,41 +170,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             labelText: 'تأكيد كلمة المرور',
                             prefixIcon: const Icon(Icons.lock_outline),
                             suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
-                                color: Colors.grey,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _obscureConfirmPassword = !_obscureConfirmPassword;
-                                });
-                              },
+                              icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
+                              onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
                             ),
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'يرجى تأكيد كلمة المرور';
-                            }
-                            if (value != _passwordController.text) {
-                              return 'كلمات المرور غير متطابقة';
-                            }
-                            return null;
-                          },
+                          validator: (value) => (value != _passwordController.text) ? 'كلمات المرور غير متطابقة' : null,
                         ),
                         const SizedBox(height: 16),
                         
-                        // الموافقة على الشروط
                         CheckboxListTile(
                           value: _agreeToTerms,
-                          onChanged: (value) {
-                            setState(() {
-                              _agreeToTerms = value ?? false;
-                            });
-                          },
-                          title: const Text(
-                            'أوافق على الشروط والأحكام وسياسة الخصوصية الخاصة بالمنصة.',
-                            style: TextStyle(color: Colors.grey, fontSize: 13),
-                          ),
+                          onChanged: (value) => setState(() => _agreeToTerms = value ?? false),
+                          title: const Text('أوافق على الشروط والأحكام.', style: TextStyle(color: Colors.grey, fontSize: 13)),
                           activeColor: const Color(0xFF00BFA5),
                           checkColor: Colors.white,
                           contentPadding: EdgeInsets.zero,
@@ -228,7 +193,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   
                   const SizedBox(height: 24),
                   
-                  // زر إنشاء الحساب
                   SizedBox(
                     height: 54,
                     child: ElevatedButton(
@@ -239,31 +203,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       child: _isLoading
                           ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text(
-                              'إنشاء الحساب والتفعيل',
-                              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
+                          : const Text('إنشاء الحساب والتفعيل', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
                   
                   const SizedBox(height: 32),
                   
-                  // العودة لتسجيل الدخول
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text('لديك حساب بالفعل؟', style: TextStyle(color: Colors.grey)),
                       TextButton(
-                        onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => const LoginScreen()),
-                          );
-                        },
-                        child: const Text(
-                          'تسجيل الدخول',
-                          style: TextStyle(color: Color(0xFF00BFA5), fontWeight: FontWeight.bold),
-                        ),
+                        onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginScreen())),
+                        child: const Text('تسجيل الدخول', style: TextStyle(color: Color(0xFF00BFA5), fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),

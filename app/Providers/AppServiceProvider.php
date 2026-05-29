@@ -25,6 +25,16 @@ class AppServiceProvider extends ServiceProvider
             \App\Domains\Price\Contracts\ExternalPriceProviderInterface::class,
             \App\Domains\Price\Providers\MockGoldPriceProvider::class
         );
+
+        $this->app->bind(
+            \App\Domains\Bullion\Repositories\Interfaces\BullionRepositoryInterface::class,
+            \App\Domains\Bullion\Repositories\Implementations\EloquentBullionRepository::class
+        );
+
+        $this->app->bind(
+            \App\Domains\Alert\Repositories\Interfaces\AlertRepositoryInterface::class,
+            \App\Domains\Alert\Repositories\Implementations\EloquentAlertRepository::class
+        );
     }
 
     /**

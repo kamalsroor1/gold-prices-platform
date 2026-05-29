@@ -1,31 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/api_client.dart';
 import '../navigation/main_navigation_screen.dart';
 import 'register_screen.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
 
-  void _handleLogin() {
+  void _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       
-      // محاكاة تسجيل الدخول الناجح
-      Future.delayed(const Duration(seconds: 1), () {
+      try {
+        final apiClient = ref.read(apiClientProvider);
+        // محاكاة استدعاء الـ API
+        final response = await apiClient.post('login', {
+          'phone_number': _phoneController.text,
+          'password': _passwordController.text,
+        });
+
         if (mounted) {
           setState(() => _isLoading = false);
           
-          // إشعار بالنجاح
+          apiClient.setToken(response['token'] as String);
+          
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('تم تسجيل الدخول بنجاح!'),
@@ -33,20 +42,29 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           );
           
-          // الانتقال للرئيسية
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
             (route) => false,
           );
         }
-      });
+      } catch (e) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('خطأ: ${e.toString()}'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+      }
     }
   }
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -69,15 +87,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // شعار أو أيقونة علوية
-                  const Icon(
-                    Icons.lock_outline,
-                    size: 80,
-                    color: Color(0xFF00BFA5),
-                  ),
+                  const Icon(Icons.lock_outline, size: 80, color: Color(0xFF00BFA5)),
                   const SizedBox(height: 32),
                   
-                  // كرت النموذج المركزي بتأثير AMOLED أنيق
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -87,28 +99,21 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: Column(
                       children: [
-                        // البريد الإلكتروني
                         TextFormField(
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
+                          controller: _phoneController,
+                          keyboardType: TextInputType.phone,
                           style: const TextStyle(color: Colors.white),
                           decoration: const InputDecoration(
-                            labelText: 'البريد الإلكتروني',
-                            prefixIcon: Icon(Icons.email_outlined),
+                            labelText: 'رقم الهاتف',
+                            prefixIcon: Icon(Icons.phone_outlined),
                           ),
                           validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'يرجى إدخال البريد الإلكتروني';
-                            }
-                            if (!value.contains('@')) {
-                              return 'يرجى إدخال بريد إلكتروني صحيح';
-                            }
+                            if (value == null || value.isEmpty) return 'يرجى إدخال رقم الهاتف';
                             return null;
                           },
                         ),
                         const SizedBox(height: 16),
                         
-                        // كلمة المرور
                         TextFormField(
                           controller: _passwordController,
                           obscureText: _obscurePassword,
@@ -117,38 +122,14 @@ class _LoginScreenState extends State<LoginScreen> {
                             labelText: 'كلمة المرور',
                             prefixIcon: const Icon(Icons.lock_open_outlined),
                             suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                                color: Colors.grey,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
+                              icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
+                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                             ),
                           ),
                           validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'يرجى إدخال كلمة المرور';
-                            }
-                            if (value.length < 6) {
-                              return 'يجب أن لا تقل كلمة المرور عن 6 خانات';
-                            }
+                            if (value == null || value.isEmpty) return 'يرجى إدخال كلمة المرور';
                             return null;
                           },
-                        ),
-                        
-                        // رابط استعادة كلمة المرور
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: TextButton(
-                            onPressed: () {},
-                            child: const Text(
-                              'نسيت كلمة المرور؟',
-                              style: TextStyle(color: Colors.grey, fontSize: 13),
-                            ),
-                          ),
                         ),
                       ],
                     ),
@@ -156,7 +137,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   
                   const SizedBox(height: 24),
                   
-                  // زر تسجيل الدخول
                   SizedBox(
                     height: 54,
                     child: ElevatedButton(
@@ -167,45 +147,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       child: _isLoading
                           ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text(
-                              'دخول',
-                              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
+                          : const Text('دخول', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
                   
                   const SizedBox(height: 32),
                   
-                  // فاصل تسجيل الدخول السريع
-                  const Row(
-                    children: [
-                      Expanded(child: Divider(color: Colors.grey)),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Text('أو سجل دخول سريع عبر', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                      ),
-                      Expanded(child: Divider(color: Colors.grey)),
-                    ],
-                  ),
-                  
-                  const SizedBox(height: 24),
-                  
-                  // أزرار جوجل وأبل
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildSocialButton(Icons.g_mobiledata, 'Google', () {
-                        // محاكاة تسجيل دخول جوجل
-                      }),
-                      _buildSocialButton(Icons.apple, 'Apple', () {
-                        // محاكاة تسجيل دخول أبل
-                      }),
-                    ],
-                  ),
-                  
-                  const SizedBox(height: 32),
-                  
-                  // رابط إنشاء الحساب الجديد
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -217,10 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             MaterialPageRoute(builder: (context) => const RegisterScreen()),
                           );
                         },
-                        child: const Text(
-                          'إنشاء حساب جديد',
-                          style: TextStyle(color: Color(0xFF00BFA5), fontWeight: FontWeight.bold),
-                        ),
+                        child: const Text('إنشاء حساب جديد', style: TextStyle(color: Color(0xFF00BFA5), fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
@@ -228,30 +172,6 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSocialButton(IconData icon, String label, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: 130,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFF161616),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade900),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: Colors.white, size: 24),
-            const SizedBox(width: 8),
-            Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ],
         ),
       ),
     );

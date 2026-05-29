@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ApiClient {
   final Dio _dio = Dio(BaseOptions(
@@ -7,9 +8,36 @@ class ApiClient {
     receiveTimeout: const Duration(seconds: 10),
   ));
 
-  Future<dynamic> get(String path) async {
+  String? _token;
+
+  void setToken(String token) {
+    _token = token;
+  }
+
+  Future<dynamic> get(String path, {bool authenticated = false}) async {
     try {
-      final response = await _dio.get(path);
+      final options = authenticated ? Options(headers: {'Authorization': 'Bearer $_token'}) : null;
+      final response = await _dio.get(path, options: options);
+      return response.data;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<dynamic> post(String path, dynamic data, {bool authenticated = false}) async {
+    try {
+      final options = authenticated ? Options(headers: {'Authorization': 'Bearer $_token'}) : null;
+      final response = await _dio.post(path, data: data, options: options);
+      return response.data;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<dynamic> delete(String path, {bool authenticated = false}) async {
+    try {
+      final options = authenticated ? Options(headers: {'Authorization': 'Bearer $_token'}) : null;
+      final response = await _dio.delete(path, options: options);
       return response.data;
     } on DioException catch (e) {
       throw _handleError(e);
@@ -24,3 +52,5 @@ class ApiClient {
     return Exception('Something went wrong: ${e.message}');
   }
 }
+
+final apiClientProvider = Provider((ref) => ApiClient());

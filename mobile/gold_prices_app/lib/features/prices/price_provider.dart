@@ -5,7 +5,7 @@ import 'price_repository.dart';
 
 // Provider for PriceRepository
 final priceRepositoryProvider = Provider<PriceRepository>((ref) {
-  return PriceRepository(ApiClient());
+  return PriceRepository(ref.read(apiClientProvider));
 });
 
 // StateNotifier for managing price state
