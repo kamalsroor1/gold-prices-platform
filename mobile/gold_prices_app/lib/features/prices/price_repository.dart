@@ -12,33 +12,28 @@ class PriceRepository {
     print('API Response type: ${data.runtimeType}'); // Debug log
     print('API Response: $data'); // Debug log
     
-    // Check if the response is a Map (error message or single object)
-    if (data is Map<String, dynamic>) {
-      // If it contains a 'data' key, handle it based on its content
-      if (data.containsKey('data')) {
-        final dynamic nestedData = data['data'];
+    if (data is Map) {
+      final safeData = Map<String, dynamic>.from(data);
+      if (safeData.containsKey('data')) {
+        final dynamic nestedData = safeData['data'];
         
-        // If 'data' is a List
         if (nestedData is List) {
-          return (nestedData).map((e) => PriceModel.fromJson(e as Map<String, dynamic>)).toList();
+          return nestedData.map((e) => PriceModel.fromJson(Map<String, dynamic>.from(e as Map))).toList();
         }
         
-        // If 'data' is a single object (which seems to be the case based on logs)
-        if (nestedData is Map<String, dynamic>) {
-          return [PriceModel.fromJson(nestedData)];
+        if (nestedData is Map) {
+          return [PriceModel.fromJson(Map<String, dynamic>.from(nestedData))];
         }
       }
       
-      // If it's a direct price object
-      if (data.containsKey('karat') && data.containsKey('price')) {
-        return [PriceModel.fromJson(data)];
+      if (safeData.containsKey('karat') && safeData.containsKey('price')) {
+        return [PriceModel.fromJson(safeData)];
       }
       return [];
     }
     
-    // Check if the response is a List
     if (data is List) {
-      return data.map((e) => PriceModel.fromJson(e as Map<String, dynamic>)).toList();
+      return data.map((e) => PriceModel.fromJson(Map<String, dynamic>.from(e as Map))).toList();
     }
     
     return [];
