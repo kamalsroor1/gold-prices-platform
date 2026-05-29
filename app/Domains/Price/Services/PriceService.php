@@ -18,8 +18,8 @@ class PriceService
         return $this->priceRepository->getLatestPrice($countryId);
     }
 
-    public function getHistory(int $countryId, ?int $karat = null, ?string $startDate = null, ?string $endDate = null)
+    public function getHistory(int $countryId, ?int $karat = null, ?string $startDate = null, ?string $endDate = null, int $perPage = 15)
     {
-        return $this->priceRepository->getHistory($countryId, $karat, $startDate, $endDate);
+        return $this->priceRepository->getHistory($countryId, $karat, $startDate, $endDate, $perPage);
     }
 }

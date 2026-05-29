@@ -108,7 +108,7 @@ class PriceScreen extends ConsumerWidget {
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
                                     Text(
-                                      '${price.price.toStringAsFixed(2)} ${getCurrencySymbol(countryId)}',
+                                      '${formatPrice(price.price)} ${getCurrencySymbol(countryId)}',
                                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF00BFA5)),
                                     ),
                                     const SizedBox(height: 4),
@@ -164,13 +164,13 @@ class PriceScreen extends ConsumerWidget {
                                 Row(
                                   children: [
                                     const Text('أقل سعر اليوم: ', style: TextStyle(color: Colors.grey, fontSize: 11)),
-                                    Text('${lowPrice.toStringAsFixed(1)} ${getCurrencySymbol(countryId)}', style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
+                                    Text('${formatPrice(lowPrice)} ${getCurrencySymbol(countryId)}', style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
                                   ],
                                 ),
                                 Row(
                                   children: [
                                     const Text('أعلى سعر اليوم: ', style: TextStyle(color: Colors.grey, fontSize: 11)),
-                                    Text('${highPrice.toStringAsFixed(1)} ${getCurrencySymbol(countryId)}', style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
+                                    Text('${formatPrice(highPrice)} ${getCurrencySymbol(countryId)}', style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
                                   ],
                                 ),
                               ],

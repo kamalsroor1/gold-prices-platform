@@ -67,11 +67,12 @@ class PriceController extends Controller
         $karat = $request->query('karat');
         $startDate = $request->query('start_date');
         $endDate = $request->query('end_date');
+        $perPage = $request->query('per_page', 15);
 
         $karatVal = ($karat && $karat !== 'all') ? (int)$karat : null;
 
-        $history = $this->priceService->getHistory((int)$countryId, $karatVal, $startDate, $endDate);
+        $history = $this->priceService->getHistory((int)$countryId, $karatVal, $startDate, $endDate, (int)$perPage);
 
-        return response()->json(['data' => $history]);
+        return response()->json($history);
     }
 }

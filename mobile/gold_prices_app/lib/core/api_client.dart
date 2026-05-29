@@ -13,6 +13,19 @@ String getCurrencySymbol(int countryId) {
   }
 }
 
+// مساعد تنسيق الأرقام الكبيرة بوضع فاصلة الآلاف (مثل 12,451)
+String formatPrice(double price) {
+  String priceStr = price.toStringAsFixed(2);
+  List<String> parts = priceStr.split('.');
+  RegExp reg = RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))');
+  String formattedInt = parts[0].replaceAllMapped(reg, (Match m) => '${m[1]},');
+  
+  if (parts[1] == '00') {
+    return formattedInt;
+  }
+  return '$formattedInt.${parts[1]}';
+}
+
 class ApiClient {
   final Dio _dio = Dio(BaseOptions(
     baseUrl: 'http://127.0.0.1:8000/api/v1/',

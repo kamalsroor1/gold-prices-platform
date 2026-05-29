@@ -65,9 +65,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with SingleTi
     ],
   };
 
-  // حالة فلاتر الجدول المالي والـ API
+  // حالة فلاتر الجدول المالي والـ API والـ Pagination
   List<HistoryRecord> _historyRecords = [];
   bool _isHistoryLoading = false;
+  bool _isLoadMoreLoading = false;
+  
+  int _currentPage = 1;
+  int _lastPage = 1;
   
   String _selectedKarat = 'الكل';
   DateTime? _startDate;
@@ -82,13 +86,23 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with SingleTi
     });
   }
 
-  // دالة جلب السجل التاريخي من الـ API بجميع خيارات الفلترة الديناميكية
-  Future<void> _fetchHistory() async {
-    setState(() => _isHistoryLoading = true);
+  // دالة جلب السجل التاريخي من الـ API بجميع خيارات الفلترة الديناميكية ونظام الصفحات (Pagination)
+  Future<void> _fetchHistory({bool loadMore = false}) async {
+    if (loadMore) {
+      if (_currentPage >= _lastPage) return;
+      setState(() => _isLoadMoreLoading = true);
+    } else {
+      setState(() {
+        _isHistoryLoading = true;
+        _currentPage = 1;
+      });
+    }
+    
     try {
       final apiClient = ref.read(apiClientProvider);
       
-      String path = 'prices/history?country_id=${widget.countryId}';
+      int targetPage = loadMore ? _currentPage + 1 : 1;
+      String path = 'prices/history?country_id=${widget.countryId}&page=$targetPage&per_page=15';
       if (_selectedKarat != 'الكل') {
         path += '&karat=$_selectedKarat';
       }
@@ -101,25 +115,39 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with SingleTi
 
       final dynamic response = await apiClient.get(path);
       
-      if (response is Map && response.containsKey('data')) {
-        final List<dynamic> list = response['data'];
+      if (response is Map) {
+        final List<dynamic> list = response['data'] ?? [];
+        final int lastPageVal = response['last_page'] ?? 1;
+        final int currentPageVal = response['current_page'] ?? 1;
+
+        final newRecords = list.map((e) {
+          final map = Map<String, dynamic>.from(e as Map);
+          return HistoryRecord(
+            date: map['created_at'].toString().split('T')[0],
+            karat: int.parse(map['karat'].toString()),
+            price: double.parse(map['price'].toString()),
+            change: 0.25, // تغير افتراضي
+          );
+        }).toList();
+
         setState(() {
-          _historyRecords = list.map((e) {
-            final map = Map<String, dynamic>.from(e as Map);
-            return HistoryRecord(
-              date: map['created_at'].toString().split('T')[0],
-              karat: int.parse(map['karat'].toString()),
-              price: double.parse(map['price'].toString()),
-              change: 0.25, // تغير افتراضي
-            );
-          }).toList();
+          if (loadMore) {
+            _historyRecords.addAll(newRecords);
+          } else {
+            _historyRecords = newRecords;
+          }
+          _currentPage = currentPageVal;
+          _lastPage = lastPageVal;
         });
       }
     } catch (e) {
       print('Error fetching history: $e');
     } finally {
       if (mounted) {
-        setState(() => _isHistoryLoading = false);
+        setState(() {
+          _isHistoryLoading = false;
+          _isLoadMoreLoading = false;
+        });
       }
     }
   }
@@ -247,7 +275,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with SingleTi
             _buildInteractiveChartSection(),
             const SizedBox(height: 24),
             
-            // 4. Historical Prices Table & Filters
+            // 4. Historical Prices Table & Filters (Real-time from API with pagination)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -347,8 +375,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with SingleTi
               pricesAsync.maybeWhen(
                 data: (data) {
                   return Text(
-                    '${price24.toStringAsFixed(2)} ${_getCurrency()}',
-                    style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
+                    '${formatPrice(price24)} ${_getCurrency()}',
+                    style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
                   );
                 },
                 orElse: () => const SizedBox(
@@ -598,7 +626,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with SingleTi
             ),
           ),
           
-          // محتويات الجدول التاريخي المجلوب من الـ API
+          // محتويات الجدول التاريخي المجلوب من الـ API مع pagination
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -638,7 +666,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with SingleTi
                     ),
                     Expanded(
                       child: Text(
-                        '${record.price.toStringAsFixed(1)} ${_getCurrency()}',
+                        '${formatPrice(record.price)} ${_getCurrency()}',
                         style: const TextStyle(color: Color(0xFF00BFA5), fontSize: 13, fontWeight: FontWeight.bold),
                         textAlign: TextAlign.center,
                       ),
@@ -669,6 +697,29 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with SingleTi
               );
             },
           ),
+          
+          // زر "عرض المزيد" (Show More) الذكي للصفحات التالية
+          if (_currentPage < _lastPage) ...[
+            const Divider(color: Colors.white10, height: 1),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: _isLoadMoreLoading
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: CircularProgressIndicator(color: Color(0xFF00BFA5), strokeWidth: 2),
+                      ),
+                    )
+                  : TextButton.icon(
+                      onPressed: () => _fetchHistory(loadMore: true),
+                      icon: const Icon(Icons.expand_more, color: Color(0xFF00BFA5)),
+                      label: const Text(
+                        'عرض المزيد',
+                        style: TextStyle(color: Color(0xFF00BFA5), fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    ),
+            ),
+          ],
         ],
       ),
     );
@@ -705,8 +756,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with SingleTi
                     style: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold),
                   ),
                   Text(
-                    '${price.price.toStringAsFixed(1)} ${_getCurrency()}',
-                    style: const TextStyle(color: Color(0xFF00BFA5), fontSize: 14, fontWeight: FontWeight.bold),
+                    '${formatPrice(price.price)} ${_getCurrency()}',
+                    style: const TextStyle(color: Color(0xFF00BFA5), fontSize: 13, fontWeight: FontWeight.bold),
                   ),
                   const Row(
                     children: [
