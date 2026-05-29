@@ -5,6 +5,7 @@ import '../../core/local_storage_service.dart';
 import '../auth/auth_provider.dart';
 import '../auth/welcome_screen.dart';
 import '../auth/login_screen.dart';
+import '../auth/register_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -62,35 +63,83 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.grey.shade900),
       ),
-      child: Row(
+      child: Column(
         children: [
-          CircleAvatar(
-            radius: 36,
-            backgroundColor: const Color(0xFF00BFA5).withOpacity(0.1),
-            child: const Icon(Icons.person, size: 40, color: Color(0xFF00BFA5)),
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 36,
+                backgroundColor: const Color(0xFF00BFA5).withOpacity(0.1),
+                child: const Icon(Icons.person, size: 40, color: Color(0xFF00BFA5)),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isGuest ? 'المستخدم الزائر' : 'حساب مستخدم نشط',
+                      style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isGuest ? 'سجل دخول لتفعيل كافة الميزات والتنبيهات المخصصة' : 'مستكشف ومستثمر في سوق الذهب',
+                      style: const TextStyle(color: Colors.grey, fontSize: 13),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'تاريخ الانضمام: مايو 2026',
+                      style: TextStyle(color: Colors.grey, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          if (isGuest) ...[
+            const SizedBox(height: 20),
+            Row(
               children: [
-                Text(
-                  isGuest ? 'المستخدم الزائر' : 'حساب مستخدم نشط',
-                  style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                Expanded(
+                  child: SizedBox(
+                    height: 44,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const LoginScreen()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF00BFA5),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text('تسجيل الدخول', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  isGuest ? 'سجل دخول لتفعيل كافة الميزات والتنبيهات المخصصة' : 'مستكشف ومستثمر في سوق الذهب',
-                  style: const TextStyle(color: Colors.grey, fontSize: 13),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'تاريخ الانضمام: مايو 2026',
-                  style: TextStyle(color: Colors.grey, fontSize: 11),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: SizedBox(
+                    height: 44,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFF00BFA5)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text('إنشاء حساب', style: TextStyle(color: Color(0xFF00BFA5), fontWeight: FontWeight.bold, fontSize: 13)),
+                    ),
+                  ),
                 ),
               ],
             ),
-          ),
+          ],
         ],
       ),
     );
