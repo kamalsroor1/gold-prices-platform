@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../navigation/main_navigation_screen.dart';
+import '../auth/welcome_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -27,7 +27,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const MainNavigationScreen(countryId: 1)),
+          MaterialPageRoute(builder: (context) => const WelcomeScreen()),
         );
       }
     });
