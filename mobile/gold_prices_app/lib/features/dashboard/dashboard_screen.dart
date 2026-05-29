@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/api_client.dart';
 import '../prices/price_provider.dart';
+import '../alerts/alert_screen.dart';
 
 class HistoryRecord {
   final String date;
@@ -249,7 +250,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with SingleTi
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_none_outlined, color: Colors.white),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AlertsScreen()),
+              );
+            },
           ),
         ],
       ),

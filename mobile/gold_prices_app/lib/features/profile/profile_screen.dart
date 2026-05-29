@@ -6,6 +6,7 @@ import '../auth/auth_provider.dart';
 import '../auth/welcome_screen.dart';
 import '../auth/login_screen.dart';
 import '../auth/register_screen.dart';
+import '../alerts/alert_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -195,7 +196,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 });
               },
             ),
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AlertsScreen()),
+              );
+            },
           ),
           const Divider(height: 1, color: Colors.white10),
           
