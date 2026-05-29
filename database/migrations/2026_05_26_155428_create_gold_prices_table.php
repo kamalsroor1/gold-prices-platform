@@ -16,8 +16,8 @@ return new class extends Migration
             $table->foreignId('country_id')->constrained('countries');
             $table->integer('karat');
             $table->decimal('price', 15, 2);
-            $table->timestamp('updated_at')->useCurrent();
             $table->unique(['country_id', 'karat']);
+            $table->timestamps();
         });
     }
 

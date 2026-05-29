@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('type', 50);
             $table->decimal('weight', 10, 2);
             $table->integer('karat');
+            $table->timestamps();
         });
     }
 

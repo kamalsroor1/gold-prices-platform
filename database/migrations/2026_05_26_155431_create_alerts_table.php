@@ -18,6 +18,7 @@ return new class extends Migration
             $table->integer('karat');
             $table->decimal('target_price', 15, 2);
             $table->boolean('is_active')->default(true);
+            $table->timestamps();
         });
     }
 

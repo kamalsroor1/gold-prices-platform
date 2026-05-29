@@ -18,6 +18,7 @@ return new class extends Migration
             $table->decimal('price', 15, 2);
             $table->timestamp('open_time');
             $table->timestamp('close_time');
+            $table->timestamps();
         });
     }
 

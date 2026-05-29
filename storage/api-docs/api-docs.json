@@ -1,0 +1,153 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Gold Prices Platform API",
+        "description": "API Documentation for Gold Prices & Bullion Tracking Platform",
+        "contact": {
+            "email": "support@goldprices.com"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000/api/v1",
+            "description": "Local Development API Server"
+        }
+    ],
+    "paths": {
+        "/countries": {
+            "get": {
+                "tags": [
+                    "Countries"
+                ],
+                "summary": "Get list of active countries",
+                "description": "Returns a list of all active countries in the system",
+                "operationId": "getCountriesList",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/CountryResource"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/prices/latest": {
+            "get": {
+                "tags": [
+                    "Prices"
+                ],
+                "summary": "Get latest gold price by country",
+                "description": "Returns the latest gold price record for a specified country id",
+                "operationId": "getLatestPrice",
+                "parameters": [
+                    {
+                        "name": "country_id",
+                        "in": "query",
+                        "description": "ID of the country to fetch latest gold price for",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PriceResource"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Country ID is required"
+                    },
+                    "404": {
+                        "description": "Price not found"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "CountryResource": {
+                "title": "Country Resource",
+                "description": "Country resource representation",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Saudi Arabia"
+                    },
+                    "code": {
+                        "type": "string",
+                        "example": "SA"
+                    },
+                    "currency": {
+                        "type": "string",
+                        "example": "SAR"
+                    },
+                    "flag_url": {
+                        "type": "string",
+                        "example": "https://example.com/flags/sa.png"
+                    }
+                },
+                "type": "object"
+            },
+            "PriceResource": {
+                "title": "Price Resource",
+                "description": "Gold price resource representation",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "country_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "karat": {
+                        "type": "string",
+                        "example": "24k"
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 2500
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-05-27T12:00:00Z"
+                    }
+                },
+                "type": "object"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Countries",
+            "description": "Countries"
+        },
+        {
+            "name": "Prices",
+            "description": "Prices"
+        }
+    ]
+}

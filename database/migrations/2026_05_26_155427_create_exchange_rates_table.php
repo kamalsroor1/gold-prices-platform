@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('country_id')->constrained('countries');
             $table->decimal('rate', 15, 6);
-            $table->timestamp('updated_at')->useCurrent();
+            $table->timestamps();
         });
     }
 

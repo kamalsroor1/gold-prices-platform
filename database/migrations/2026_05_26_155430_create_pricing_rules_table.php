@@ -19,6 +19,7 @@ return new class extends Migration
             $table->decimal('cashback_per_gram', 10, 2);
             $table->decimal('tax_percentage', 5, 2)->default(0.00);
             $table->decimal('fixed_fees', 10, 2)->default(0.00);
+            $table->timestamps();
 
             // الفهارس المطلوبة لتحسين الأداء
             $table->index(['brand_id', 'product_id'], 'idx_brand_product');

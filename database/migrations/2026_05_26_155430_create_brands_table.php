@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('country_id')->constrained('countries');
             $table->string('name');
             $table->string('logo_url')->nullable();
+            $table->timestamps();
         });
     }
 
