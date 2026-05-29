@@ -9,9 +9,7 @@ class EloquentPriceRepository implements PriceRepositoryInterface
 {
     public function getLatestPrice(int $countryId)
     {
-        return GoldPrice::where('country_id', $countryId)
-            ->latest()
-            ->first();
+        return GoldPrice::where('country_id', $countryId)->get();
     }
 
     public function create(array $data)

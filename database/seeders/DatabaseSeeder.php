@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             CountrySeeder::class,
+            GoldProductSeeder::class,
             BrandSeeder::class,
             GoldPricesSeeder::class,
             GoldPriceHistorySeeder::class,

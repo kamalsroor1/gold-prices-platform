@@ -52,12 +52,12 @@ class PriceController extends Controller
             return response()->json(['message' => 'Country ID is required'], 400);
         }
         
-        $price = $this->priceService->getLatestPrice((int)$countryId);
+        $prices = $this->priceService->getLatestPrice((int)$countryId);
         
-        if (!$price) {
+        if ($prices->isEmpty()) {
             return response()->json(['message' => 'Price not found'], 404);
         }
 
-        return new PriceResource($price);
+        return PriceResource::collection($prices);
     }
 }

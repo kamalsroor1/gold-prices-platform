@@ -9,7 +9,7 @@ use App\Domains\Country\Models\Country;
 class GoldPriceCandle extends Model
 {
     use HasFactory;
-    protected $fillable = ['country_id', 'karat', 'open', 'high', 'low', 'close', 'time_frame', 'start_at'];
+    protected $fillable = ['country_id', 'karat', 'price', 'open_time', 'close_time'];
 
     public function country()
     {
