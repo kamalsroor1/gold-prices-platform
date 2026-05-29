@@ -11,19 +11,16 @@ class GoldPricesSeeder extends Seeder
     public function run(): void
     {
         $countries = Country::all();
+        $karats = [24, 21, 18];
 
         foreach ($countries as $country) {
-            GoldPrice::factory()->create([
-                'country_id' => $country->id,
-                'karat' => 24,
-                'price' => 3500.50,
-            ]);
-            
-            GoldPrice::factory()->create([
-                'country_id' => $country->id,
-                'karat' => 21,
-                'price' => 3060.00,
-            ]);
+            foreach ($karats as $karat) {
+                GoldPrice::create([
+                    'country_id' => $country->id,
+                    'karat' => $karat,
+                    'price' => 3000 + ($karat * 50),
+                ]);
+            }
         }
     }
 }

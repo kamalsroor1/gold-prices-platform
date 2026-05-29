@@ -189,20 +189,40 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             title: 'تسجيل الخروج',
             textColor: Colors.redAccent,
             trailing: const Icon(Icons.arrow_forward_ios, color: Colors.redAccent, size: 16),
-            onTap: () async {
-              try {
-                await ref.read(authRepositoryProvider).logout();
-                ref.read(apiClientProvider).setToken(''); // مسح التوكين
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-                  (route) => false,
-                );
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('خطأ أثناء تسجيل الخروج: ${e.toString()}')),
-                );
-              }
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  backgroundColor: const Color(0xFF161616),
+                  title: const Text('تسجيل الخروج', style: TextStyle(color: Colors.white)),
+                  content: const Text('هل أنت متأكد أنك تريد تسجيل الخروج؟', style: TextStyle(color: Colors.grey)),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('إلغاء', style: TextStyle(color: Colors.white)),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        try {
+                          await ref.read(authRepositoryProvider).logout();
+                          ref.read(apiClientProvider).setToken(''); // مسح التوكين
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+                            (route) => false,
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('خطأ أثناء تسجيل الخروج: ${e.toString()}')),
+                          );
+                        }
+                      },
+                      child: const Text('تأكيد', style: TextStyle(color: Colors.redAccent)),
+                    ),
+                  ],
+                ),
+              );
             },
           ),
         ],
