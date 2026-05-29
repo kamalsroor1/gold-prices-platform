@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/api_client.dart';
+import '../auth/auth_provider.dart';
+import '../auth/welcome_screen.dart';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _notificationsEnabled = true;
   String _defaultCurrency = 'USD (\$)';
   String _selectedCountry = 'مصر';
@@ -185,8 +189,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             title: 'تسجيل الخروج',
             textColor: Colors.redAccent,
             trailing: const Icon(Icons.arrow_forward_ios, color: Colors.redAccent, size: 16),
-            onTap: () {
-              // تسجيل الخروج والعودة لشاشة الـ Welcome
+            onTap: () async {
+              try {
+                await ref.read(authRepositoryProvider).logout();
+                ref.read(apiClientProvider).setToken(''); // مسح التوكين
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+                  (route) => false,
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('خطأ أثناء تسجيل الخروج: ${e.toString()}')),
+                );
+              }
             },
           ),
         ],
@@ -212,3 +228,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
+
