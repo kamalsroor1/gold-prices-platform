@@ -20,14 +20,20 @@ class PriceSyncService
 
     public function syncPrices(int $countryId)
     {
-        $prices = $this->priceProvider->fetchLatestPrices();
+        try {
+            $prices = $this->priceProvider->fetchLatestPrices();
 
-        foreach ($prices as $karat => $price) {
-            $this->priceRepository->create([
-                'country_id' => $countryId,
-                'karat' => $karat,
-                'price' => $price,
-            ]);
+            foreach ($prices as $karat => $price) {
+                $this->priceRepository->create([
+                    'country_id' => $countryId,
+                    'karat' => $karat,
+                    'price' => $price,
+                ]);
+            }
+        } catch (\Exception $e) {
+            // سجل الخطأ أو قم بإخطار نظام المراقبة
+            \Log::error("Failed to sync prices for country {$countryId}: " . $e->getMessage());
+            throw $e;
         }
     }
 }
