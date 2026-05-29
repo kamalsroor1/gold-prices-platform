@@ -15,6 +15,23 @@ class CountryController extends Controller
         $this->countryService = $countryService;
     }
 
+    /**
+     * @OA\Get(
+     *     path="/countries",
+     *     summary="Get list of active countries",
+     *     description="Returns a list of all active countries in the system",
+     *     operationId="getCountriesList",
+     *     tags={"Countries"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(ref="#/components/schemas/CountryResource")
+     *         )
+     *     )
+     * )
+     */
     public function index()
     {
         return CountryResource::collection($this->countryService->getActiveCountries());
