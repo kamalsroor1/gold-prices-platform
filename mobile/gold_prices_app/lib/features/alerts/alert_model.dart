@@ -15,7 +15,7 @@ class AlertModel {
     return AlertModel(
       id: json['id'],
       karat: json['karat'],
-      targetPrice: (json['target_price'] as num).toDouble(),
+      targetPrice: double.parse(json['target_price'].toString()),
       isActive: json['is_active'] == 1 || json['is_active'] == true,
     );
   }
