@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hive/hive.dart';
 import 'package:gold_prices_app/main.dart';
+import 'package:gold_prices_app/core/local_storage_service.dart';
 import 'package:gold_prices_app/features/prices/price_provider.dart';
 import 'package:gold_prices_app/features/prices/price_repository.dart';
 import 'package:gold_prices_app/features/prices/price_model.dart';
@@ -23,6 +26,19 @@ class FakeBullionRepository extends Fake implements BullionRepository {
 }
 
 void main() {
+  setUpAll(() async {
+    // تهيئة Hive في مجلد مؤقت خاص بالاختبارات
+    final tempDir = Directory.systemTemp.createTempSync();
+    Hive.init(tempDir.path);
+    
+    // تسجيل المحولات وفتح الصناديق المطلوبة للاختبار
+    if (!Hive.isAdapterRegistered(0)) {
+      Hive.registerAdapter(PriceModelAdapter());
+    }
+    await Hive.openBox<PriceModel>('prices');
+    await Hive.openBox('auth');
+  });
+
   testWidgets('GoldPricesApp smoke test', (WidgetTester tester) async {
     // Build our app wrapped in ProviderScope with fake overrides
     await tester.pumpWidget(

@@ -206,7 +206,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         Navigator.pop(context);
                         try {
                           await ref.read(authRepositoryProvider).logout();
-                          ref.read(apiClientProvider).setToken(''); // مسح التوكين
+                          ref.read(apiClientProvider).clearToken(); // مسح التوكين برمجياً ومحلياً من الذاكرة المستمرة
                           Navigator.pushAndRemoveUntil(
                             context,
                             MaterialPageRoute(builder: (context) => const WelcomeScreen()),

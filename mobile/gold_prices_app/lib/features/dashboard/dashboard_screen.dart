@@ -124,15 +124,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with SingleTi
     }
   }
 
-  // الحصول على رمز العملة بناءً على الدولة
+  // الحصول على رمز العملة بناءً على الدولة باللغة العربية
   String _getCurrency() {
-    switch (widget.countryId) {
-      case 1: return 'EGP';
-      case 2: return 'SAR';
-      case 3: return 'AED';
-      case 4: return 'KWD';
-      default: return 'USD';
-    }
+    return getCurrencySymbol(widget.countryId);
   }
 
   String _getXAxisTitle(double value) {

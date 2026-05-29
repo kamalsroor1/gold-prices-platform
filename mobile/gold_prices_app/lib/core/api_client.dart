@@ -1,5 +1,17 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'local_storage_service.dart';
+
+// مساعد جلب رمز العملة باللغة العربية بناءً على الدولة
+String getCurrencySymbol(int countryId) {
+  switch (countryId) {
+    case 1: return 'ج.م';
+    case 2: return 'ر.س';
+    case 3: return 'د.إ';
+    case 4: return 'د.ك';
+    default: return '\$';
+  }
+}
 
 class ApiClient {
   final Dio _dio = Dio(BaseOptions(
@@ -11,8 +23,19 @@ class ApiClient {
 
   String? _token;
 
+  ApiClient() {
+    // تحميل التوكين تلقائياً من الذاكرة المحلية المستمرة عند الإقلاع لمنع تسجيل الخروج عند التحديث
+    _token = LocalStorageService.token;
+  }
+
   void setToken(String token) {
     _token = token;
+    LocalStorageService.saveToken(token); // حفظ التوكين محلياً
+  }
+
+  void clearToken() {
+    _token = null;
+    LocalStorageService.clearToken(); // مسح التوكين محلياً
   }
 
   Future<dynamic> get(String path, {bool authenticated = false}) async {

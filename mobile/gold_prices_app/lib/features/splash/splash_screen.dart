@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../core/local_storage_service.dart';
+import '../navigation/main_navigation_screen.dart';
 import '../auth/welcome_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -22,13 +24,23 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
 
-    // الانتقال بعد انتهاء الـ Splash
+    // التحقق من الجلسة والانتقال بعد انتهاء الـ Splash
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-        );
+        final String? savedToken = LocalStorageService.token;
+        
+        // إذا كان هناك توكين محفوظ محلياً، يدخل فوراً دون الحاجة لتسجيل دخول مجدداً عند الـ Refresh!
+        if (savedToken != null && savedToken.isNotEmpty) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const MainNavigationScreen(countryId: 1)),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+          );
+        }
       }
     });
   }

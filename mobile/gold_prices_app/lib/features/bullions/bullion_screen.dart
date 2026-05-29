@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../../core/api_client.dart';
 import 'bullion_provider.dart';
 import 'bullion_model.dart';
 
@@ -170,7 +171,7 @@ class _BullionScreenState extends ConsumerState<BullionScreen> {
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    '\$${bullion.price.toStringAsFixed(2)}',
+                                    '${bullion.price.toStringAsFixed(2)} ${getCurrencySymbol(widget.countryId)}',
                                     style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF00BFA5)),
                                   ),
                                   const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.grey),
@@ -399,7 +400,7 @@ class _BullionScreenState extends ConsumerState<BullionScreen> {
                         const Divider(color: Colors.white10),
                         _buildDetailRow('عيار الذهب ونقاوته', 'عيار ${bullion.karat} (نقاوة 999.9)'),
                         const Divider(color: Colors.white10),
-                        _buildDetailRow('القيمة المالية الفورية السوقية', '\$${bullion.price.toStringAsFixed(2)}'),
+                        _buildDetailRow('القيمة المالية الفورية السوقية', '${bullion.price.toStringAsFixed(2)} ${getCurrencySymbol(widget.countryId)}'),
                         const Divider(color: Colors.white10),
                         _buildDetailRow('منشأ الذهب المعتمد', 'معتمد ومدموغ رسمياً'),
                       ],

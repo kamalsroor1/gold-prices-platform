@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/api_client.dart';
 import '../prices/price_provider.dart';
 import 'calculator_service.dart';
 
@@ -119,11 +120,11 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> with Single
 وزن السبيكة: $weight جرام
 العيار المعتمد: عيار 24
 ----------------------------------------
-💵 القيمة الأساسية للذهب: \$${_baseGoldValue.toStringAsFixed(2)}
-🛠️ قيمة المصنعية الإجمالية: \$${_makingChargeValue.toStringAsFixed(2)}
-⚖️ قيمة الضرائب / الفارق الصافي: \$${_taxOrCashbackValue.toStringAsFixed(2)}
+💵 القيمة الأساسية للذهب: ${_baseGoldValue.toStringAsFixed(2)} ج.م
+🛠️ قيمة المصنعية الإجمالية: ${_makingChargeValue.toStringAsFixed(2)} ج.م
+⚖️ قيمة الضرائب / الفارق الصافي: ${_taxOrCashbackValue.toStringAsFixed(2)} ج.م
 ----------------------------------------
-💰 الإجمالي النهائي التقديري: \$${_calculatedResult.toStringAsFixed(2)}
+💰 الإجمالي النهائي التقديري: ${_calculatedResult.toStringAsFixed(2)} ج.م
 
 * هذه الحسبة تقديرية واستشارية مبنية على أسعار البورصة الحالية.
 ''';
@@ -194,7 +195,7 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> with Single
                     pricesAsync.maybeWhen(
                       data: (prices) {
                         return Text(
-                          '\$${goldPrice24k.toStringAsFixed(2)}',
+                          '${goldPrice24k.toStringAsFixed(2)} ج.م',
                           style: const TextStyle(
                             color: Color(0xFFFFD700),
                             fontWeight: FontWeight.bold,
@@ -328,13 +329,13 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> with Single
             style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
-          _buildBreakdownRow('القيمة الأساسية للذهب (عيار 24)', '\$${_baseGoldValue.toStringAsFixed(2)}'),
+          _buildBreakdownRow('القيمة الأساسية للذهب (عيار 24)', '${_baseGoldValue.toStringAsFixed(2)} ج.م'),
           const Divider(color: Colors.white10),
-          _buildBreakdownRow('قيمة المصنعية الإجمالية للوزن', '\$${_makingChargeValue.toStringAsFixed(2)}'),
+          _buildBreakdownRow('قيمة المصنعية الإجمالية للوزن', '${_makingChargeValue.toStringAsFixed(2)} ج.م'),
           const Divider(color: Colors.white10),
           _buildBreakdownRow(
             _tabController.index == 0 ? 'قيمة الضرائب الإجمالية' : 'فارق كود إعادة الشراء (الخصم الصافي)',
-            '\$${_taxOrCashbackValue.toStringAsFixed(2)}',
+            '${_taxOrCashbackValue.toStringAsFixed(2)} ج.م',
           ),
           const SizedBox(height: 16),
           const Divider(color: Color(0xFF00BFA5), thickness: 1.2),
@@ -347,8 +348,8 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> with Single
                 style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
               ),
               Text(
-                '\$${_calculatedResult.toStringAsFixed(2)}',
-                style: const TextStyle(color: Color(0xFF00BFA5), fontSize: 24, fontWeight: FontWeight.bold),
+                '${_calculatedResult.toStringAsFixed(2)} ج.م',
+                style: const TextStyle(color: Color(0xFF00BFA5), fontSize: 22, fontWeight: FontWeight.bold),
               ),
             ],
           ),
