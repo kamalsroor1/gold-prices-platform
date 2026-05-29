@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import '../dashboard/dashboard_screen.dart';
 import '../prices/price_screen.dart';
 import '../bullions/bullion_screen.dart';
 import '../calculator/calculator_screen.dart';
+import '../profile/profile_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   final int countryId;
@@ -19,9 +21,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void initState() {
     super.initState();
     _screens = [
+      const DashboardScreen(),
       PriceScreen(countryId: widget.countryId),
       BullionScreen(countryId: widget.countryId),
       const CalculatorScreen(),
+      const ProfileScreen(),
     ];
   }
 
@@ -37,16 +41,29 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         onTap: (index) => setState(() => _currentIndex = index),
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.show_chart),
-            label: 'الأسعار',
+            icon: Icon(Icons.dashboard_outlined),
+            activeIcon: Icon(Icons.dashboard),
+            label: 'الرئيسية',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.grid_view),
-            label: 'السبائك والعملات',
+            icon: Icon(Icons.show_chart_outlined),
+            activeIcon: Icon(Icons.show_chart),
+            label: 'السوق',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.calculate),
-            label: 'الحاسبة الذكية',
+            icon: Icon(Icons.explore_outlined),
+            activeIcon: Icon(Icons.explore),
+            label: 'استكشف',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calculate_outlined),
+            activeIcon: Icon(Icons.calculate),
+            label: 'الأدوات',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'حسابي',
           ),
         ],
       ),

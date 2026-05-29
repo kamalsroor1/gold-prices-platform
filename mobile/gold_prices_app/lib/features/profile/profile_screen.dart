@@ -1,0 +1,214 @@
+import 'package:flutter/material.dart';
+
+class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _notificationsEnabled = true;
+  String _defaultCurrency = 'USD (\$)';
+  String _selectedCountry = 'مصر';
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF090909),
+      appBar: AppBar(
+        title: const Text('الملف الشخصي والإعدادات'),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. User Header Info
+            _buildProfileHeader(),
+            const SizedBox(height: 28),
+            
+            // 2. Platform Settings
+            const Text(
+              'تخصيص المنصة والإعدادات',
+              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            _buildSettingsCard(),
+            const SizedBox(height: 24),
+            
+            // 3. User Data / Actions
+            _buildActionsCard(),
+            const SizedBox(height: 30),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileHeader() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF161616),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade900),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 36,
+            backgroundColor: const Color(0xFF00BFA5).withOpacity(0.1),
+            child: const Icon(Icons.person, size: 40, color: Color(0xFF00BFA5)),
+          ),
+          const SizedBox(width: 20),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'المستخدم الزائر',
+                  style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'مستكشف في سوق الذهب',
+                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'تاريخ الانضمام: مايو 2026',
+                  style: TextStyle(color: Colors.grey, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF161616),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade900),
+      ),
+      child: Column(
+        children: [
+          // الدولة
+          _buildSettingsTile(
+            icon: Icons.public,
+            title: 'الدولة الحالية',
+            trailing: Text(
+              _selectedCountry,
+              style: const TextStyle(color: Color(0xFF00BFA5), fontWeight: FontWeight.bold),
+            ),
+            onTap: () {
+              // تعديل الدولة
+            },
+          ),
+          const Divider(height: 1, color: Colors.white10),
+          
+          // العملة الافتراضية
+          _buildSettingsTile(
+            icon: Icons.monetization_on_outlined,
+            title: 'العملة الافتراضية',
+            trailing: Text(
+              _defaultCurrency,
+              style: const TextStyle(color: Color(0xFF00BFA5), fontWeight: FontWeight.bold),
+            ),
+            onTap: () {
+              // تعديل العملة
+            },
+          ),
+          const Divider(height: 1, color: Colors.white10),
+          
+          // الإشعارات والتنبيهات
+          _buildSettingsTile(
+            icon: Icons.notifications_active_outlined,
+            title: 'إشعارات تغيرات الأسعار',
+            trailing: Switch.adaptive(
+              value: _notificationsEnabled,
+              activeColor: const Color(0xFF00BFA5),
+              onChanged: (value) {
+                setState(() {
+                  _notificationsEnabled = value;
+                });
+              },
+            ),
+            onTap: () {},
+          ),
+          const Divider(height: 1, color: Colors.white10),
+          
+          // اللغة
+          _buildSettingsTile(
+            icon: Icons.language,
+            title: 'لغة التطبيق',
+            trailing: const Text(
+              'العربية',
+              style: TextStyle(color: Color(0xFF00BFA5), fontWeight: FontWeight.bold),
+            ),
+            onTap: () {},
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionsCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF161616),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade900),
+      ),
+      child: Column(
+        children: [
+          _buildSettingsTile(
+            icon: Icons.help_outline,
+            title: 'عن المنصة ومصادر الأسعار',
+            trailing: const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
+            onTap: () {},
+          ),
+          const Divider(height: 1, color: Colors.white10),
+          _buildSettingsTile(
+            icon: Icons.privacy_tip_outlined,
+            title: 'سياسة الخصوصية والشروط',
+            trailing: const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
+            onTap: () {},
+          ),
+          const Divider(height: 1, color: Colors.white10),
+          _buildSettingsTile(
+            icon: Icons.logout,
+            title: 'تسجيل الخروج',
+            textColor: Colors.redAccent,
+            trailing: const Icon(Icons.arrow_forward_ios, color: Colors.redAccent, size: 16),
+            onTap: () {
+              // تسجيل الخروج والعودة لشاشة الـ Welcome
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsTile({
+    required IconData icon,
+    required String title,
+    required Widget trailing,
+    required VoidCallback onTap,
+    Color? textColor,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: textColor ?? const Color(0xFF00BFA5)),
+      title: Text(
+        title,
+        style: TextStyle(color: textColor ?? Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+      ),
+      trailing: trailing,
+      onTap: onTap,
+    );
+  }
+}
