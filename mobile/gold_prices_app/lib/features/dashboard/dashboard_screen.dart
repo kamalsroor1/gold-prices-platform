@@ -3,6 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../prices/price_provider.dart';
 
+class HistoryRecord {
+  final String date;
+  final int karat;
+  final double price;
+  final double change;
+
+  HistoryRecord({
+    required this.date,
+    required this.karat,
+    required this.price,
+    required this.change,
+  });
+}
+
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
@@ -49,6 +63,56 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     ],
   };
 
+  // سجل العمليات والأسعار التاريخية للجدول المالي
+  final List<HistoryRecord> _historyRecords = [
+    HistoryRecord(date: '2026-05-29', karat: 24, price: 3500.50, change: 0.25),
+    HistoryRecord(date: '2026-05-28', karat: 24, price: 3490.00, change: 0.15),
+    HistoryRecord(date: '2026-05-27', karat: 24, price: 3485.50, change: -0.12),
+    HistoryRecord(date: '2026-05-26', karat: 24, price: 3492.00, change: 0.35),
+    HistoryRecord(date: '2026-05-25', karat: 24, price: 3470.00, change: 0.05),
+    HistoryRecord(date: '2026-05-24', karat: 24, price: 3465.00, change: -0.20),
+    HistoryRecord(date: '2026-05-23', karat: 24, price: 3450.00, change: 0.10),
+  ];
+
+  String _getXAxisTitle(double value) {
+    if (_selectedPeriod == '24 س') {
+      switch (value.toInt()) {
+        case 0: return '12:00';
+        case 1: return '15:00';
+        case 2: return '18:00';
+        case 3: return '21:00';
+        case 4: return '00:00';
+        case 5: return '03:00';
+      }
+    } else if (_selectedPeriod == 'أسبوع') {
+      switch (value.toInt()) {
+        case 0: return '24 مايو';
+        case 1: return '25 مايو';
+        case 2: return '26 مايو';
+        case 3: return '27 مايو';
+        case 4: return '28 مايو';
+        case 5: return '29 مايو';
+      }
+    } else if (_selectedPeriod == 'شهر') {
+      switch (value.toInt()) {
+        case 0: return 'أسبوع 1';
+        case 1: return 'أسبوع 2';
+        case 2: return 'أسبوع 3';
+        case 3: return 'أسبوع 4';
+        case 5: return 'اليوم';
+      }
+    } else {
+      switch (value.toInt()) {
+        case 0: return 'الربع 1';
+        case 1: return 'الربع 2';
+        case 2: return 'الربع 3';
+        case 3: return 'الربع 4';
+        case 5: return 'اليوم';
+      }
+    }
+    return '';
+  }
+
   @override
   Widget build(BuildContext context) {
     final pricesAsync = ref.watch(priceProvider(1));
@@ -82,11 +146,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             _buildMarketHeroCard(goldPrice24k, pricesAsync),
             const SizedBox(height: 24),
             
-            // 2. Interactive Chart Section
+            // 2. Interactive Chart Section with Dates
             _buildInteractiveChartSection(),
             const SizedBox(height: 24),
             
-            // 3. Quick Karat Grid
+            // 3. Historical Prices Table
+            const Text(
+              'جدول السجل التاريخي للأسعار',
+              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            _buildHistoryTable(),
+            const SizedBox(height: 24),
+            
+            // 4. Quick Karat Grid
             const Text(
               'بطاقات الأعيرة الفورية',
               style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
@@ -95,7 +168,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             _buildKaratGrid(pricesAsync),
             const SizedBox(height: 24),
             
-            // 4. Market Insights
+            // 5. Market Insights
             const Text(
               'تحليلات ونظرة على السوق (Market Insights)',
               style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
@@ -217,7 +290,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('تحليل اتجاه الأسعار', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              const Text('تحليل اتجاه الأسعار التاريخي', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
               Row(
                 children: ['24 س', 'أسبوع', 'شهر', 'سنة'].map((period) {
                   final isSelected = _selectedPeriod == period;
@@ -247,12 +320,32 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
           const SizedBox(height: 24),
           SizedBox(
-            height: 180,
+            height: 200,
             child: LineChart(
               LineChartData(
                 gridData: const FlGridData(show: false),
-                titlesData: const FlTitlesData(show: false),
                 borderData: FlBorderData(show: false),
+                titlesData: FlTitlesData(
+                  show: true,
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 28,
+                      getTitlesWidget: (value, meta) {
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            _getXAxisTitle(value),
+                            style: const TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                ),
                 lineBarsData: [
                   LineChartBarData(
                     spots: _chartData[_selectedPeriod]!,
@@ -270,6 +363,103 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHistoryTable() {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF161616),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade900),
+      ),
+      child: Column(
+        children: [
+          // رأس الجدول
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: const BoxDecoration(
+              color: Colors.white10,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(child: Text('التاريخ واليوم', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 13))),
+                Expanded(child: Text('العيار المعتمد', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 13), textAlign: TextAlign.center)),
+                Expanded(child: Text('سعر الجرام المالي', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 13), textAlign: TextAlign.center)),
+                Expanded(child: Text('نسبة التغير اليومية', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 13), textAlign: TextAlign.end)),
+              ],
+            ),
+          ),
+          
+          // محتويات الجدول التاريخي
+          ..._historyRecords.map((record) {
+            final isUp = record.change >= 0;
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: Colors.white10)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      record.date,
+                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Expanded(
+                    child: Container(
+                      alignment: Alignment.center,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.white10,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'عيار ${record.karat}',
+                          style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      '\$${record.price.toStringAsFixed(2)}',
+                      style: const TextStyle(color: Color(0xFF00BFA5), fontSize: 13, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  Expanded(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Icon(
+                          isUp ? Icons.trending_up : Icons.trending_down,
+                          color: isUp ? Colors.greenAccent : Colors.redAccent,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${isUp ? "+" : ""}${record.change.toStringAsFixed(2)}%',
+                          style: TextStyle(
+                            color: isUp ? Colors.greenAccent : Colors.redAccent,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
         ],
       ),
     );
