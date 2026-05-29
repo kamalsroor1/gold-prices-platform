@@ -1,7 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api_client.dart';
+import '../../core/local_storage_service.dart';
 import 'price_model.dart';
 import 'price_repository.dart';
+
+// المزود المركزي لمُعرف الدولة المحددة
+final selectedCountryIdProvider = StateProvider<int>((ref) {
+  return LocalStorageService.countryId;
+});
 
 // Provider for PriceRepository
 final priceRepositoryProvider = Provider<PriceRepository>((ref) {

@@ -7,6 +7,7 @@ import '../auth/welcome_screen.dart';
 import '../auth/login_screen.dart';
 import '../auth/register_screen.dart';
 import '../alerts/alert_screen.dart';
+import '../prices/price_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -16,11 +17,155 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  bool _notificationsEnabled = true;
-  bool _periodicAlertsEnabled = true;
-  bool _dailySummaryEnabled = true;
-  String _defaultCurrency = 'USD (\$)';
-  String _selectedCountry = 'مصر';
+  late bool _notificationsEnabled;
+  late bool _periodicAlertsEnabled;
+  late bool _dailySummaryEnabled;
+  late String _appLanguage;
+  
+  late int _countryId;
+  late String _selectedCountry;
+  late String _defaultCurrency;
+
+  @override
+  void initState() {
+    super.initState();
+    // تحميل جميع الحالات المحفوظة من الذاكرة المحلية المستمرة عند بدء الشاشة
+    _notificationsEnabled = LocalStorageService.priceAlertsEnabled;
+    _periodicAlertsEnabled = LocalStorageService.periodicAlertsEnabled;
+    _dailySummaryEnabled = LocalStorageService.dailySummaryEnabled;
+    _appLanguage = LocalStorageService.appLanguage;
+    
+    _countryId = LocalStorageService.countryId;
+    _selectedCountry = _getCountryName(_countryId);
+    _defaultCurrency = _getCurrencyName(_countryId);
+  }
+
+  // مفسر أسماء الدول بناءً على الـ ID
+  String _getCountryName(int id) {
+    switch (id) {
+      case 1: return 'مصر';
+      case 2: return 'السعودية';
+      case 3: return 'الإمارات';
+      case 4: return 'الكويت';
+      default: return 'مصر';
+    }
+  }
+
+  // مفسر رموز العملات باللغة العربية بناءً على الـ ID
+  String _getCurrencyName(int id) {
+    switch (id) {
+      case 1: return 'جنيه مصري (ج.م)';
+      case 2: return 'ريال سعودي (ر.س)';
+      case 3: return 'درهم إماراتي (د.إ)';
+      case 4: return 'دينار كويتي (د.ك)';
+      default: return 'جنيه مصري (ج.م)';
+    }
+  }
+
+  // فتح نافذة تغيير الدولة المخصصة
+  void _showCountrySelectionDialog() {
+    final countries = [
+      {'id': 1, 'name': 'مصر'},
+      {'id': 2, 'name': 'السعودية'},
+      {'id': 3, 'name': 'الإمارات'},
+      {'id': 4, 'name': 'الكويت'},
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF161616),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'اختر الدولة الحالية لتحديث الأسعار',
+                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              ...countries.map((country) {
+                final int id = country['id'] as int;
+                final isSelected = _countryId == id;
+                return ListTile(
+                  title: Text(country['name'] as String, style: TextStyle(color: isSelected ? const Color(0xFF00BFA5) : Colors.white)),
+                  trailing: isSelected ? const Icon(Icons.check, color: Color(0xFF00BFA5)) : null,
+                  onTap: () {
+                    setState(() {
+                      _countryId = id;
+                      _selectedCountry = country['name'] as String;
+                      _defaultCurrency = _getCurrencyName(id);
+                    });
+                    
+                    // 1. حفظ التغيير محلياً في Hive
+                    LocalStorageService.saveCountryId(id);
+                    
+                    // 2. تحديث الـ Provider المركزي لتغيير وتحديث أسعار كل الشاشات لحظياً!
+                    ref.read(selectedCountryIdProvider.notifier).state = id;
+                    
+                    Navigator.pop(context);
+                    
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('تم تحويل الدولة بنجاح وتحديث أسعار سوق ${country['name']}!'),
+                        backgroundColor: const Color(0xFF00BFA5),
+                      ),
+                    );
+                  },
+                );
+              }).toList(),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // فتح نافذة تغيير اللغة
+  void _showLanguageSelectionDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF161616),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'اختر لغة التطبيق المفضلة',
+                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              ...['العربية', 'English'].map((lang) {
+                final isSelected = _appLanguage == lang;
+                return ListTile(
+                  title: Text(lang, style: TextStyle(color: isSelected ? const Color(0xFF00BFA5) : Colors.white)),
+                  trailing: isSelected ? const Icon(Icons.check, color: Color(0xFF00BFA5)) : null,
+                  onTap: () {
+                    setState(() {
+                      _appLanguage = lang;
+                    });
+                    LocalStorageService.saveAppLanguage(lang);
+                    Navigator.pop(context);
+                  },
+                );
+              }).toList(),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -165,9 +310,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               _selectedCountry,
               style: const TextStyle(color: Color(0xFF00BFA5), fontWeight: FontWeight.bold),
             ),
-            onTap: () {
-              // تعديل الدولة
-            },
+            onTap: _showCountrySelectionDialog,
           ),
           const Divider(height: 1, color: Colors.white10),
           
@@ -177,10 +320,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             title: 'العملة الافتراضية',
             trailing: Text(
               _defaultCurrency,
-              style: const TextStyle(color: Color(0xFF00BFA5), fontWeight: FontWeight.bold),
+              style: const TextStyle(color: Color(0xFF00BFA5), fontWeight: FontWeight.bold, fontSize: 13),
             ),
             onTap: () {
-              // تعديل العملة
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('العملة الافتراضية تتبع الدولة المحددة تلقائياً.')),
+              );
             },
           ),
           const Divider(height: 1, color: Colors.white10),
@@ -192,10 +337,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             trailing: Switch.adaptive(
               value: _notificationsEnabled,
               activeColor: const Color(0xFF00BFA5),
-              onChanged: (value) {
+              onChanged: (value) async {
                 setState(() {
                   _notificationsEnabled = value;
                 });
+                await LocalStorageService.savePriceAlerts(value);
               },
             ),
             onTap: () {
@@ -214,10 +360,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             trailing: Switch.adaptive(
               value: _periodicAlertsEnabled,
               activeColor: const Color(0xFF00BFA5),
-              onChanged: (value) {
+              onChanged: (value) async {
                 setState(() {
                   _periodicAlertsEnabled = value;
                 });
+                await LocalStorageService.savePeriodicAlerts(value);
               },
             ),
             onTap: () {},
@@ -231,10 +378,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             trailing: Switch.adaptive(
               value: _dailySummaryEnabled,
               activeColor: const Color(0xFF00BFA5),
-              onChanged: (value) {
+              onChanged: (value) async {
                 setState(() {
                   _dailySummaryEnabled = value;
                 });
+                await LocalStorageService.saveDailySummary(value);
               },
             ),
             onTap: () {},
@@ -245,11 +393,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           _buildSettingsTile(
             icon: Icons.language,
             title: 'لغة التطبيق',
-            trailing: const Text(
-              'العربية',
-              style: TextStyle(color: Color(0xFF00BFA5), fontWeight: FontWeight.bold),
+            trailing: Text(
+              _appLanguage,
+              style: const TextStyle(color: Color(0xFF00BFA5), fontWeight: FontWeight.bold),
             ),
-            onTap: () {},
+            onTap: _showLanguageSelectionDialog,
           ),
         ],
       ),
@@ -351,11 +499,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       leading: Icon(icon, color: textColor ?? const Color(0xFF00BFA5)),
       title: Text(
         title,
-        style: TextStyle(color: textColor ?? Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+        style: TextStyle(color: textColor ?? Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
       ),
       trailing: trailing,
       onTap: onTap,
     );
   }
 }
-

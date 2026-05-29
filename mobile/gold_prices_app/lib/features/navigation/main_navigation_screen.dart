@@ -1,40 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../prices/price_screen.dart';
 import '../bullions/bullion_screen.dart';
 import '../calculator/calculator_screen.dart';
 import '../profile/profile_screen.dart';
+import '../prices/price_provider.dart';
 
-class MainNavigationScreen extends StatefulWidget {
+class MainNavigationScreen extends ConsumerStatefulWidget {
   final int countryId;
   const MainNavigationScreen({super.key, this.countryId = 1});
 
   @override
-  State<MainNavigationScreen> createState() => _MainNavigationScreenState();
+  ConsumerState<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
-class _MainNavigationScreenState extends State<MainNavigationScreen> {
+class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   int _currentIndex = 0;
-  late final List<Widget> _screens;
-
-  @override
-  void initState() {
-    super.initState();
-    _screens = [
-      DashboardScreen(countryId: widget.countryId),
-      PriceScreen(countryId: widget.countryId),
-      BullionScreen(countryId: widget.countryId),
-      const CalculatorScreen(),
-      const ProfileScreen(),
-    ];
-  }
 
   @override
   Widget build(BuildContext context) {
+    // مراقبة الدولة النشطة وتحديث جميع الشاشات لحظياً عند تغييرها من الملف الشخصي!
+    final activeCountryId = ref.watch(selectedCountryIdProvider);
+
+    final List<Widget> screens = [
+      DashboardScreen(countryId: activeCountryId),
+      PriceScreen(countryId: activeCountryId),
+      BullionScreen(countryId: activeCountryId),
+      const CalculatorScreen(),
+      const ProfileScreen(),
+    ];
+
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
-        children: _screens,
+        children: screens,
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
