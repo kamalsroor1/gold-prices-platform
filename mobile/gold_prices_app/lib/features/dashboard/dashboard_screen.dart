@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../../core/api_client.dart';
 import '../prices/price_provider.dart';
 
 class HistoryRecord {
@@ -18,13 +19,14 @@ class HistoryRecord {
 }
 
 class DashboardScreen extends ConsumerStatefulWidget {
-  const DashboardScreen({super.key});
+  final int countryId;
+  const DashboardScreen({super.key, this.countryId = 1});
 
   @override
   ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+class _DashboardScreenState extends ConsumerState<DashboardScreen> with SingleTickerProviderStateMixin {
   String _selectedPeriod = 'أسبوع';
   
   // نقاط الرسم البياني المحاكاة لفترات مختلفة
@@ -63,16 +65,75 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     ],
   };
 
-  // سجل العمليات والأسعار التاريخية للجدول المالي
-  final List<HistoryRecord> _historyRecords = [
-    HistoryRecord(date: '2026-05-29', karat: 24, price: 3500.50, change: 0.25),
-    HistoryRecord(date: '2026-05-28', karat: 24, price: 3490.00, change: 0.15),
-    HistoryRecord(date: '2026-05-27', karat: 24, price: 3485.50, change: -0.12),
-    HistoryRecord(date: '2026-05-26', karat: 24, price: 3492.00, change: 0.35),
-    HistoryRecord(date: '2026-05-25', karat: 24, price: 3470.00, change: 0.05),
-    HistoryRecord(date: '2026-05-24', karat: 24, price: 3465.00, change: -0.20),
-    HistoryRecord(date: '2026-05-23', karat: 24, price: 3450.00, change: 0.10),
-  ];
+  // حالة فلاتر الجدول المالي والـ API
+  List<HistoryRecord> _historyRecords = [];
+  bool _isHistoryLoading = false;
+  
+  String _selectedKarat = 'الكل';
+  DateTime? _startDate;
+  DateTime? _endDate;
+
+  @override
+  void initState() {
+    super.initState();
+    // جلب السجل التاريخي الفوري من الـ API عند الإقلاع
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchHistory();
+    });
+  }
+
+  // دالة جلب السجل التاريخي من الـ API بجميع خيارات الفلترة الديناميكية
+  Future<void> _fetchHistory() async {
+    setState(() => _isHistoryLoading = true);
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      
+      String path = 'prices/history?country_id=${widget.countryId}';
+      if (_selectedKarat != 'الكل') {
+        path += '&karat=$_selectedKarat';
+      }
+      if (_startDate != null) {
+        path += '&start_date=${_startDate!.toIso8601String().split('T')[0]}';
+      }
+      if (_endDate != null) {
+        path += '&end_date=${_endDate!.toIso8601String().split('T')[0]}';
+      }
+
+      final dynamic response = await apiClient.get(path);
+      
+      if (response is Map && response.containsKey('data')) {
+        final List<dynamic> list = response['data'];
+        setState(() {
+          _historyRecords = list.map((e) {
+            final map = Map<String, dynamic>.from(e as Map);
+            return HistoryRecord(
+              date: map['created_at'].toString().split('T')[0],
+              karat: int.parse(map['karat'].toString()),
+              price: double.parse(map['price'].toString()),
+              change: 0.25, // تغير افتراضي
+            );
+          }).toList();
+        });
+      }
+    } catch (e) {
+      print('Error fetching history: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isHistoryLoading = false);
+      }
+    }
+  }
+
+  // الحصول على رمز العملة بناءً على الدولة
+  String _getCurrency() {
+    switch (widget.countryId) {
+      case 1: return 'EGP';
+      case 2: return 'SAR';
+      case 3: return 'AED';
+      case 4: return 'KWD';
+      default: return 'USD';
+    }
+  }
 
   String _getXAxisTitle(double value) {
     if (_selectedPeriod == '24 س') {
@@ -113,9 +174,42 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return '';
   }
 
+  // فتح نافذة اختيار التاريخ
+  Future<void> _selectDate(BuildContext context, bool isStart) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2025),
+      lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: Color(0xFF00BFA5),
+              onPrimary: Colors.white,
+              surface: Color(0xFF161616),
+              onSurface: Colors.white,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        if (isStart) {
+          _startDate = picked;
+        } else {
+          _endDate = picked;
+        }
+      });
+      _fetchHistory();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final pricesAsync = ref.watch(priceProvider(1));
+    final pricesAsync = ref.watch(priceProvider(widget.countryId));
     double goldPrice24k = 3500.50;
 
     pricesAsync.whenData((prices) {
@@ -150,11 +244,30 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             _buildInteractiveChartSection(),
             const SizedBox(height: 24),
             
-            // 3. Historical Prices Table
-            const Text(
-              'جدول السجل التاريخي للأسعار',
-              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            // 3. Historical Prices Table & Filters
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'سجل الأسعار التاريخي (API)',
+                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                if (_startDate != null || _endDate != null || _selectedKarat != 'الكل')
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedKarat = 'الكل';
+                        _startDate = null;
+                        _endDate = null;
+                      });
+                      _fetchHistory();
+                    },
+                    child: const Text('إعادة تعيين', style: TextStyle(color: Colors.redAccent, fontSize: 12)),
+                  ),
+              ],
             ),
+            const SizedBox(height: 12),
+            _buildFilterWidget(),
             const SizedBox(height: 12),
             _buildHistoryTable(),
             const SizedBox(height: 24),
@@ -207,12 +320,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('سعر الأونصة العالمي عيار 24', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                  SizedBox(height: 4),
-                  Text('الذهب الفوري المباشر', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text('سعر جرام الذهب عيار 24 بالعملة المحلية', style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                  const SizedBox(height: 4),
+                  Text('الذهب الفوري المباشر (${_getCurrency()})', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                 ],
               ),
               Container(
@@ -240,8 +353,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               pricesAsync.maybeWhen(
                 data: (data) {
                   return Text(
-                    '\$${price24.toStringAsFixed(2)}',
-                    style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                    '${price24.toStringAsFixed(2)} ${_getCurrency()}',
+                    style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
                   );
                 },
                 orElse: () => const SizedBox(
@@ -368,7 +481,103 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
+  // ويدجت الفلاتر التفاعلية لتاريخ الأسعار
+  Widget _buildFilterWidget() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF161616),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade900),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('تصفية العيار:', style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold)),
+              DropdownButton<String>(
+                value: _selectedKarat,
+                dropdownColor: const Color(0xFF161616),
+                underline: const SizedBox(),
+                style: const TextStyle(color: Color(0xFF00BFA5), fontWeight: FontWeight.bold),
+                items: const [
+                  DropdownMenuItem(value: 'الكل', child: Text('جميع الأعيرة')),
+                  DropdownMenuItem(value: '24', child: Text('عيار 24')),
+                  DropdownMenuItem(value: '21', child: Text('عيار 21')),
+                  DropdownMenuItem(value: '18', child: Text('عيار 18')),
+                ],
+                onChanged: (val) {
+                  setState(() => _selectedKarat = val!);
+                  _fetchHistory();
+                },
+              ),
+            ],
+          ),
+          const Divider(color: Colors.white10),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _selectDate(context, true),
+                  icon: const Icon(Icons.date_range, size: 16, color: Color(0xFF00BFA5)),
+                  label: Text(
+                    _startDate == null ? 'تاريخ البدء' : _startDate!.toIso8601String().split('T')[0],
+                    style: const TextStyle(color: Colors.grey, fontSize: 11),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.white10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _selectDate(context, false),
+                  icon: const Icon(Icons.date_range, size: 16, color: Color(0xFF00BFA5)),
+                  label: Text(
+                    _endDate == null ? 'تاريخ الانتهاء' : _endDate!.toIso8601String().split('T')[0],
+                    style: const TextStyle(color: Colors.grey, fontSize: 11),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.white10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildHistoryTable() {
+    if (_isHistoryLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32.0),
+          child: CircularProgressIndicator(color: Color(0xFF00BFA5)),
+        ),
+      );
+    }
+
+    if (_historyRecords.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: const Color(0xFF161616),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey.shade900),
+        ),
+        child: const Center(
+          child: Text('لا توجد سجلات تاريخية تطابق الفلترة المحددة.', style: TextStyle(color: Colors.grey, fontSize: 14)),
+        ),
+      );
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF161616),
@@ -388,78 +597,84 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(child: Text('التاريخ واليوم', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 13))),
-                Expanded(child: Text('العيار المعتمد', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 13), textAlign: TextAlign.center)),
+                Expanded(child: Text('العيار', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 13), textAlign: TextAlign.center)),
                 Expanded(child: Text('سعر الجرام المالي', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 13), textAlign: TextAlign.center)),
                 Expanded(child: Text('نسبة التغير اليومية', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 13), textAlign: TextAlign.end)),
               ],
             ),
           ),
           
-          // محتويات الجدول التاريخي
-          ..._historyRecords.map((record) {
-            final isUp = record.change >= 0;
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: Colors.white10)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      record.date,
-                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+          // محتويات الجدول التاريخي المجلوب من الـ API
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _historyRecords.length,
+            itemBuilder: (context, index) {
+              final record = _historyRecords[index];
+              final isUp = record.change >= 0;
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: Colors.white10)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        record.date,
+                        style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: Container(
-                      alignment: Alignment.center,
+                    Expanded(
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.white10,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          'عيار ${record.karat}',
-                          style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold),
+                        alignment: Alignment.center,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.white10,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'عيار ${record.karat}',
+                            style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      '\$${record.price.toStringAsFixed(2)}',
-                      style: const TextStyle(color: Color(0xFF00BFA5), fontSize: 13, fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
+                    Expanded(
+                      child: Text(
+                        '${record.price.toStringAsFixed(1)} ${_getCurrency()}',
+                        style: const TextStyle(color: Color(0xFF00BFA5), fontSize: 13, fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Icon(
-                          isUp ? Icons.trending_up : Icons.trending_down,
-                          color: isUp ? Colors.greenAccent : Colors.redAccent,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${isUp ? "+" : ""}${record.change.toStringAsFixed(2)}%',
-                          style: TextStyle(
+                    Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Icon(
+                            isUp ? Icons.trending_up : Icons.trending_down,
                             color: isUp ? Colors.greenAccent : Colors.redAccent,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
+                            size: 16,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          Text(
+                            '${isUp ? "+" : ""}${record.change.toStringAsFixed(2)}%',
+                            style: TextStyle(
+                              color: isUp ? Colors.greenAccent : Colors.redAccent,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            );
-          }).toList(),
+                  ],
+                ),
+              );
+            },
+          ),
         ],
       ),
     );
@@ -496,8 +711,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     style: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold),
                   ),
                   Text(
-                    '\$${price.price.toStringAsFixed(1)}',
-                    style: const TextStyle(color: Color(0xFF00BFA5), fontSize: 16, fontWeight: FontWeight.bold),
+                    '${price.price.toStringAsFixed(1)} ${_getCurrency()}',
+                    style: const TextStyle(color: Color(0xFF00BFA5), fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                   const Row(
                     children: [

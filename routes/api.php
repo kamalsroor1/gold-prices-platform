@@ -14,6 +14,7 @@ Route::prefix('v1')->group(function () {
 
     Route::get('/countries', [CountryController::class, 'index']);
     Route::get('/prices/latest', [PriceController::class, 'latest']);
+    Route::get('/prices/history', [PriceController::class, 'history']);
     Route::get('/bullions', [BullionController::class, 'index']);
     
     Route::middleware('auth.token')->group(function () {

@@ -60,4 +60,18 @@ class PriceController extends Controller
 
         return PriceResource::collection($prices);
     }
+
+    public function history(Request $request)
+    {
+        $countryId = $request->query('country_id', 1);
+        $karat = $request->query('karat');
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+
+        $karatVal = ($karat && $karat !== 'all') ? (int)$karat : null;
+
+        $history = $this->priceService->getHistory((int)$countryId, $karatVal, $startDate, $endDate);
+
+        return response()->json(['data' => $history]);
+    }
 }

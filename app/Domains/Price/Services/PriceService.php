@@ -17,4 +17,9 @@ class PriceService
     {
         return $this->priceRepository->getLatestPrice($countryId);
     }
+
+    public function getHistory(int $countryId, ?int $karat = null, ?string $startDate = null, ?string $endDate = null)
+    {
+        return $this->priceRepository->getHistory($countryId, $karat, $startDate, $endDate);
+    }
 }

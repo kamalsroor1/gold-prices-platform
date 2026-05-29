@@ -16,4 +16,24 @@ class EloquentPriceRepository implements PriceRepositoryInterface
     {
         return GoldPrice::create($data);
     }
+
+    public function getHistory(int $countryId, ?int $karat = null, ?string $startDate = null, ?string $endDate = null)
+    {
+        $query = \Illuminate\Support\Facades\DB::table('gold_price_history')
+            ->where('country_id', $countryId);
+
+        if ($karat) {
+            $query->where('karat', $karat);
+        }
+
+        if ($startDate) {
+            $query->whereDate('created_at', '>=', $startDate);
+        }
+
+        if ($endDate) {
+            $query->whereDate('created_at', '<=', $endDate);
+        }
+
+        return $query->orderBy('created_at', 'desc')->get();
+    }
 }

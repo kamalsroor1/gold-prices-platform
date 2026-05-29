@@ -21,7 +21,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void initState() {
     super.initState();
     _screens = [
-      const DashboardScreen(),
+      DashboardScreen(countryId: widget.countryId),
       PriceScreen(countryId: widget.countryId),
       BullionScreen(countryId: widget.countryId),
       const CalculatorScreen(),
