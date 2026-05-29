@@ -236,15 +236,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with SingleTi
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Market Hero Section
+            // 1. Quick Karat Grid (Moved to top as first priority)
+            const Text(
+              'بطاقات الأعيرة الفورية',
+              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            _buildKaratGrid(pricesAsync),
+            const SizedBox(height: 24),
+
+            // 2. Market Hero Section
             _buildMarketHeroCard(goldPrice24k, pricesAsync),
             const SizedBox(height: 24),
             
-            // 2. Interactive Chart Section with Dates
+            // 3. Interactive Chart Section with Dates
             _buildInteractiveChartSection(),
             const SizedBox(height: 24),
             
-            // 3. Historical Prices Table & Filters
+            // 4. Historical Prices Table & Filters
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -270,15 +279,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with SingleTi
             _buildFilterWidget(),
             const SizedBox(height: 12),
             _buildHistoryTable(),
-            const SizedBox(height: 24),
-            
-            // 4. Quick Karat Grid
-            const Text(
-              'بطاقات الأعيرة الفورية',
-              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            _buildKaratGrid(pricesAsync),
             const SizedBox(height: 24),
             
             // 5. Market Insights
