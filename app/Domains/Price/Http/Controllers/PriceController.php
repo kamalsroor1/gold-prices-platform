@@ -16,6 +16,35 @@ class PriceController extends Controller
         $this->priceService = $priceService;
     }
 
+    /**
+     * @OA\Get(
+     *     path="/prices/latest",
+     *     summary="Get latest gold price by country",
+     *     description="Returns the latest gold price record for a specified country id",
+     *     operationId="getLatestPrice",
+     *     tags={"Prices"},
+     *     @OA\Parameter(
+     *         name="country_id",
+     *         in="query",
+     *         description="ID of the country to fetch latest gold price for",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(ref="#/components/schemas/PriceResource")
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Country ID is required"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Price not found"
+     *     )
+     * )
+     */
     public function latest(Request $request)
     {
         $countryId = $request->query('country_id');
