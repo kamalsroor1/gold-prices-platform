@@ -78,6 +78,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       }
     } catch (e) {
       print('Error syncing settings from server: $e');
+      if (e is UnauthorizedException) {
+        // إذا كان التوكين غير صالح (Invalid token) نقوم بعمل تسجيل خروج تلقائي وتوجيهه فوراً لصفحة الترحيب!
+        ref.read(apiClientProvider).clearToken(); // مسح التوكين برمجياً ومحلياً
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('انتهت صلاحية الجلسة أو الرمز غير صالح، يرجى تسجيل الدخول مجدداً.'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+          
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+            (route) => false,
+          );
+        }
+      }
     }
   }
 

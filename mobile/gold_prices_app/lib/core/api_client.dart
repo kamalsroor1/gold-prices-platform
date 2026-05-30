@@ -2,6 +2,14 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'local_storage_service.dart';
 
+// استثناء مخصص لعدم المصادقة أو التوكينات غير الصالحة
+class UnauthorizedException implements Exception {
+  final String message;
+  UnauthorizedException(this.message);
+  @override
+  String toString() => message;
+}
+
 // مساعد جلب رمز العملة باللغة العربية بناءً على الدولة
 String getCurrencySymbol(int countryId) {
   switch (countryId) {
@@ -82,6 +90,16 @@ class ApiClient {
   }
 
   Exception _handleError(DioException e) {
+    // التقاط خطأ عدم المصادقة 401 أو التوكين غير الصالح لفرض تسجيل خروج تلقائي آمن
+    if (e.response?.statusCode == 401) {
+      final dynamic data = e.response?.data;
+      if (data is Map && (data.containsKey('message') || data.containsKey('error'))) {
+        final msg = data['message'] ?? data['error'] ?? 'Unauthorized';
+        return UnauthorizedException(msg.toString());
+      }
+      return UnauthorizedException('Invalid token');
+    }
+    
     if (e.type == DioExceptionType.connectionError ||
         e.type == DioExceptionType.connectionTimeout) {
       return Exception('No internet connection');
